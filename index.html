@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>UDOY — Unity for Development & Opportunity of Youth</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F3D2E">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   UDOY — Design Tokens
+   Palette: Bottle Green #0F3D2E · Marigold #E8A33D
+            Rust Clay #C1502E · Paper #FBF6EC
+            Ink #1B2420 · Sage #6B8F7B
+   Type: Space Grotesk (display) · Inter (body)
+         IBM Plex Mono (labels/eyebrows)
+   Signature: stitched "kantha" running-dash borders
+              + circular seal badge
+============================================ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --ink: #1B2420;
+    --paper: #FBF6EC;
+    --paper-dim: #F3EBDA;
+    --green: #0F3D2E;
+    --green-deep: #0A2A20;
+    --gold: #E8A33D;
+    --gold-deep: #C6822A;
+    --rust: #C1502E;
+    --sage: #6B8F7B;
+    --line: #E3D9C2;
+    --white: #FFFFFF;
+    --error-bg: #FBE3DC;
+    --error-ink: #93321A;
+    --success-bg: #E4EEE1;
+    --success-ink: #1F5C3E;
+
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+}
+
+html { -webkit-tap-highlight-color: transparent; }
+
+body {
+    font-family: var(--font-body);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+        radial-gradient(circle at 1px 1px, rgba(15,61,46,0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+}
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .page.active { animation: fadeUp .38s ease both; }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+}
+
+.app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    margin: auto;
+    padding: 22px 18px 48px;
+    position: relative;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* stitched running-dash rule — the signature motif */
+.stitch {
+    height: 10px;
+    background-image: repeating-linear-gradient(
+        90deg, var(--gold) 0 8px, transparent 8px 16px
+    );
+    opacity: .8;
+    margin: 0 0 22px;
+    border-radius: 2px;
+}
+.stitch.small { height: 6px; margin: 14px 0; }
+
+/* ===== BRAND / SEAL ===== */
+
+.brand { text-align: center; padding: 18px 8px 8px; }
+
+.seal {
+    width: 84px; height: 84px; margin: auto;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 34px; font-weight: 700;
+    position: relative;
+    box-shadow: 0 12px 26px rgba(15,61,46,.28);
+}
+.seal::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    border: 2px dashed var(--gold);
+}
+
+.brand .eyebrow {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--rust);
+    font-weight: 500;
+}
+
+.brand h1 {
+    font-family: var(--font-display);
+    margin-top: 6px;
+    font-size: 34px;
+    letter-spacing: .02em;
+    color: var(--green-deep);
+}
+
+.brand p {
+    margin-top: 6px;
+    color: var(--sage);
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 300px;
+    margin-inline: auto;
+}
+
+/* ===== CARD ===== */
+
+.card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 26px 22px;
+    box-shadow: 0 4px 0 var(--line);
+    position: relative;
+    overflow: hidden;
+}
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 5px;
+    background: repeating-linear-gradient(
+        90deg, var(--gold) 0 8px, transparent 8px 16px
+    );
+}
+
+.card h2 {
+    font-family: var(--font-display);
+    font-size: 23px;
+    color: var(--green-deep);
+    margin-top: 4px;
+}
+
+.subtitle {
+    color: var(--sage);
+    margin-top: 6px;
+    margin-bottom: 24px;
+    font-size: 13.5px;
+}
+
+/* ===== INPUTS ===== */
+
+.input-group { margin-bottom: 16px; }
+
+.input-group label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 8px;
+}
+
+input, select {
+    width: 100%;
+    height: 48px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 0 14px;
+    background: var(--paper);
+    outline: none;
+    color: var(--ink);
+    transition: border-color .15s, background .15s;
+}
+input::placeholder { color: #A79F8C; }
+
+input:focus, select:focus {
+    border-color: var(--green);
+    background: var(--white);
+}
+
+select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--sage) 50%),
+                       linear-gradient(135deg, var(--sage) 50%, transparent 50%);
+    background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+
+.password-box { position: relative; }
+.password-box input { padding-right: 68px; }
+
+.show-password {
+    position: absolute;
+    right: 6px; top: 6px; height: 36px; padding: 0 10px;
+    border: none; background: transparent;
+    color: var(--rust);
+    font-family: var(--font-mono);
+    font-size: 10.5px; font-weight: 500; letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+/* ===== BUTTONS ===== */
+
+.primary-btn, .secondary-btn {
+    width: 100%; min-height: 50px;
+    border-radius: 12px;
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 15px;
+    border: none;
+    transition: transform .12s ease, filter .12s ease;
+}
+
+.primary-btn {
+    background: var(--green);
+    color: var(--paper);
+}
+.primary-btn:active { transform: scale(.97); filter: brightness(.95); }
+
+.secondary-btn {
+    background: var(--paper-dim);
+    color: var(--green-deep);
+    border: 1.5px dashed var(--gold-deep);
+}
+.secondary-btn:active { transform: scale(.97); }
+
+.text-btn {
+    display: block;
+    margin: 18px auto 0;
+    background: transparent; border: none;
+    color: var(--rust);
+    font-weight: 600; font-size: 13px;
+}
+
+.separator {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0;
+    font-family: var(--font-mono);
+    color: var(--sage); font-size: 10.5px; letter-spacing: .1em;
+}
+.separator::before, .separator::after {
+    content: ""; height: 1px; background: var(--line); flex: 1;
+}
+
+/* ===== HEADER (signup / forgot) ===== */
+
+.top-header {
+    display: flex; align-items: center; gap: 12px;
+    margin: 6px 0 22px;
+}
+
+.top-header h2 {
+    font-family: var(--font-display);
+    font-size: 21px;
+    color: var(--green-deep);
+}
+.top-header p { color: var(--sage); font-size: 12.5px; margin-top: 2px; }
+
+.back-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: var(--white);
+    font-size: 22px; line-height: 1;
+    color: var(--green-deep);
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ===== VERIFY ROW ===== */
+
+.verify-row { display: flex; gap: 8px; }
+.verify-row input { flex: 1; }
+.verify-btn {
+    width: 82px; border: none; border-radius: 12px;
+    background: var(--gold); color: var(--green-deep);
+    font-family: var(--font-display);
+    font-size: 12.5px; font-weight: 700;
+}
+.verify-btn:active { filter: brightness(.95); }
+
+.two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ===== MESSAGE ===== */
+
+.message {
+    display: none;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-left: 3px solid transparent;
+}
+.message.show { display: block; }
+.message.error { background: var(--error-bg); color: var(--error-ink); border-color: var(--rust); }
+.message.success { background: var(--success-bg); color: var(--success-ink); border-color: var(--green); }
+.hidden { display: none !important; }
+
+/* ===== DASHBOARD ===== */
+
+.dashboard-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin: 8px 0 22px;
+}
+.dashboard-header .eyebrow {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--rust);
+}
+.dashboard-header h1 {
+    font-family: var(--font-display);
+    font-size: 27px; color: var(--green-deep); margin-top: 4px;
+}
+
+.logout-btn {
+    border: 1.5px solid var(--line);
+    background: var(--white); color: var(--rust);
+    padding: 10px 16px; border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 500; letter-spacing: .04em;
+}
+
+.welcome-card {
+    background: var(--green);
+    color: var(--paper);
+    border-radius: 20px;
+    padding: 22px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 10px 25px rgba(15,61,46,.22);
+    position: relative;
+    overflow: hidden;
+}
+.welcome-card::after {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 5px;
+    background: repeating-linear-gradient(90deg, var(--gold) 0 8px, transparent 8px 16px);
+}
+
+.small-text { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--sage); }
+.welcome-card .small-text { color: rgba(251,246,236,.65); }
+
+.profile-circle {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--gold); color: var(--green-deep);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 700;
+    flex-shrink: 0;
+}
+
+.welcome-card h2 { font-family: var(--font-display); margin: 4px 0 2px; font-size: 19px; }
+.welcome-card p:last-child { color: rgba(251,246,236,.7); font-size: 12.5px; }
+
+.feature-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-top: 18px;
+}
+
+.feature-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    transition: transform .12s ease;
+}
+.feature-card:active { transform: scale(.97); }
+
+.feature-card .icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--paper-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.feature-card h3 { font-family: var(--font-display); font-size: 15px; color: var(--green-deep); }
+.feature-card p { color: var(--sage); font-size: 11.5px; margin-top: 4px; line-height: 1.4; }
+
+.dashboard-info {
+    background: var(--paper-dim);
+    border: 1.5px dashed var(--gold-deep);
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 16px;
+}
+.dashboard-info h3 { font-family: var(--font-display); font-size: 14.5px; color: var(--green-deep); }
+.dashboard-info p { color: var(--sage); font-size: 12.5px; margin-top: 6px; line-height: 1.5; }
+
+/* ===== LOADING ===== */
+
+.loading {
+    position: fixed; inset: 0;
+    background: rgba(251,246,236,.92);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 999;
+}
+.loading p {
+    margin-top: 14px; font-family: var(--font-mono);
+    font-size: 11.5px; letter-spacing: .06em; color: var(--sage);
+}
+.loader {
+    width: 40px; height: 40px;
+    border: 3px solid var(--line);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== FOCUS STATES (accessibility) ===== */
+button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--gold-deep);
+    outline-offset: 2px;
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 380px) {
+    .app { padding: 16px 14px 40px; }
+    .card { padding: 20px 16px; }
+    .two-column { grid-template-columns: 1fr; gap: 0; }
+    .verify-btn { width: 74px; }
+    .brand h1 { font-size: 29px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- LOGIN PAGE -->
+    <section id="loginPage" class="page active">
+
+        <div class="brand">
+            <div class="seal">U</div>
+            <p class="eyebrow">Est. Community · Bangladesh</p>
+            <h1>UDOY</h1>
+            <p>Unity for Development & Opportunity of Youth</p>
+        </div>
+
+        <div class="card">
+
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to continue with your UDOY account</p>
+
+            <form id="loginForm">
+
+                <div class="input-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="loginPassword">Password</label>
+                    <div class="password-box">
+                        <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" required>
+                        <button type="button" class="show-password" onclick="togglePassword('loginPassword', this)">Show</button>
+                    </div>
+                </div>
+
+                <button class="primary-btn" type="submit">Sign In</button>
+
+            </form>
+
+            <button class="text-btn" type="button" onclick="showForgot()">Forgot password?</button>
+
+            <div class="separator"><span>OR</span></div>
+
+            <button class="secondary-btn" type="button" onclick="showSignup()">Create new account</button>
+
+        </div>
+
+    </section>
+
+
+    <!-- SIGNUP PAGE -->
+    <section id="signupPage" class="page">
+
+        <div class="top-header">
+            <button class="back-btn" onclick="showLogin()" aria-label="Back">‹</button>
+            <div>
+                <h2>Create account</h2>
+                <p>Join the UDOY community</p>
+            </div>
+        </div>
+
+        <div class="card signup-card">
+
+            <div id="signupMessage" class="message"></div>
+
+            <form id="signupForm">
+
+                <div class="input-group">
+                    <label for="name">Full name</label>
+                    <input type="text" id="name" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">Gmail</label>
+                    <div class="verify-row">
+                        <input type="email" id="email" placeholder="example@gmail.com" required>
+                        <button type="button" class="verify-btn" onclick="sendVerificationCode()">Verify</button>
+                    </div>
+                </div>
+
+                <div class="input-group hidden" id="verificationBox">
+                    <label for="verificationCode">Verification code</label>
+                    <div class="verify-row">
+                        <input type="text" id="verificationCode" placeholder="6-digit code" maxlength="6" inputmode="numeric">
+                        <button type="button" class="verify-btn" onclick="verifyEmail()">Confirm</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="mobile">Mobile number</label>
+                    <input type="tel" id="mobile" placeholder="01XXXXXXXXX" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Choose a username" required>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label for="dob">Date of birth</label>
+                        <input type="date" id="dob" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" required>
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label for="region">Region</label>
+                        <input type="text" id="region" placeholder="Your region" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="country">Country</label>
+                        <input type="text" id="country" value="Bangladesh" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="signupPassword">Password</label>
+                    <div class="password-box">
+                        <input type="password" id="signupPassword" placeholder="Create password" required>
+                        <button type="button" class="show-password" onclick="togglePassword('signupPassword', this)">Show</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirmPassword">Confirm password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                </div>
+
+                <button class="primary-btn" type="submit">Create account</button>
+
+            </form>
+
+            <button class="text-btn" onclick="showLogin()">Already have an account? Sign in</button>
+
+        </div>
+
+    </section>
+
+
+    <!-- FORGOT PASSWORD -->
+    <section id="forgotPage" class="page">
+
+        <div class="top-header">
+            <button class="back-btn" onclick="showLogin()" aria-label="Back">‹</button>
+            <div>
+                <h2>Reset password</h2>
+                <p>Recover your account</p>
+            </div>
+        </div>
+
+        <div class="card">
+
+            <div id="forgotMessage" class="message"></div>
+
+            <form id="forgotForm">
+                <div class="input-group">
+                    <label for="forgotEmail">Gmail</label>
+                    <input type="email" id="forgotEmail" placeholder="Enter your Gmail" required>
+                </div>
+                <button type="submit" class="primary-btn">Send reset code</button>
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <!-- DASHBOARD -->
+    <section id="dashboardPage" class="page">
+
+        <div class="dashboard-header">
+            <div>
+                <p class="eyebrow">Welcome to</p>
+                <h1>UDOY</h1>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="welcome-card">
+            <div class="profile-circle" id="profileInitial">U</div>
+            <div>
+                <p class="small-text">Welcome back</p>
+                <h2 id="dashboardName">User</h2>
+                <p id="dashboardUsername">@username</p>
+            </div>
+        </div>
+
+        <div class="stitch small"></div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="icon">📢</div>
+                <h3>Notices</h3>
+                <p>Latest UDOY updates</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">💬</div>
+                <h3>Messages</h3>
+                <p>Your conversations</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">👤</div>
+                <h3>Profile</h3>
+                <p>Manage your profile</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">📊</div>
+                <h3>Reports</h3>
+                <p>View your reports</p>
+            </div>
+        </div>
+
+        <div class="dashboard-info">
+            <h3>UDOY Community</h3>
+            <p>Unity for Development & Opportunity of Youth</p>
+        </div>
+
+    </section>
+
+</div>
+
+<div id="loading" class="loading hidden">
+    <div class="loader"></div>
+    <p>PLEASE WAIT</p>
+</div>
+
+<script>
+let emailVerified = false;
+let currentUser = null;
+
+/* ===== PAGE CONTROL ===== */
+function showPage(pageId) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    const page = document.getElementById(pageId);
+    if (page) page.classList.add("active");
+}
+function showLogin() { showPage("loginPage"); }
+function showSignup() { showPage("signupPage"); }
+function showForgot() { showPage("forgotPage"); }
+
+/* ===== PASSWORD ===== */
+function togglePassword(inputId, button) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === "password") {
+        input.type = "text";
+        button.textContent = "Hide";
+    } else {
+        input.type = "password";
+        button.textContent = "Show";
+    }
+}
+
+/* ===== LOADING ===== */
+function showLoading() { document.getElementById("loading")?.classList.remove("hidden"); }
+function hideLoading() { document.getElementById("loading")?.classList.add("hidden"); }
+
+/* ===== MESSAGE ===== */
+function showMessage(id, msg, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.className = "message show " + type;
+}
+function clearMessage(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = "";
+    el.className = "message";
+}
+
+/* ===== APPS SCRIPT CHECK ===== */
+function isAppsScript() {
+    return typeof google !== "undefined" && google.script && google.script.run;
+}
+
+/* ===== EMAIL VERIFICATION ===== */
+function sendVerificationCode() {
+    const emailElement = document.getElementById("email");
+    if (!emailElement) return;
+    const email = emailElement.value.trim();
+
+    if (!email) return showMessage("signupMessage", "Please enter your Gmail address.", "error");
+    if (!email.toLowerCase().endsWith("@gmail.com")) return showMessage("signupMessage", "Please use a Gmail address.", "error");
+
+    if (!isAppsScript()) {
+        showMessage("signupMessage", "Gmail verification works after connecting the Google Apps Script backend.", "error");
+        return;
+    }
+
+    showLoading();
+    google.script.run
+        .withSuccessHandler(function(result) {
+            hideLoading();
+            if (result && result.success) {
+                document.getElementById("verificationBox")?.classList.remove("hidden");
+                showMessage("signupMessage", result.message, "success");
+            } else {
+                showMessage("signupMessage", result ? result.message : "Verification failed.", "error");
+            }
+        })
+        .withFailureHandler(function() {
+            hideLoading();
+            showMessage("signupMessage", "Unable to send verification code.", "error");
+        })
+        .sendVerificationCode(email);
+}
+
+function verifyEmail() {
+    const emailElement = document.getElementById("email");
+    const codeElement = document.getElementById("verificationCode");
+    if (!emailElement || !codeElement) return;
+
+    const email = emailElement.value.trim();
+    const code = codeElement.value.trim();
+
+    if (!code) return showMessage("signupMessage", "Enter the verification code.", "error");
+
+    if (!isAppsScript()) {
+        showMessage("signupMessage", "Connect the Google Apps Script backend first.", "error");
+        return;
+    }
+
+    showLoading();
+    google.script.run
+        .withSuccessHandler(function(result) {
+            hideLoading();
+            if (result && result.success) {
+                emailVerified = true;
+                emailElement.readOnly = true;
+                codeElement.readOnly = true;
+                showMessage("signupMessage", "Gmail verified successfully.", "success");
+            } else {
+                showMessage("signupMessage", result ? result.message : "Invalid code.", "error");
+            }
+        })
+        .withFailureHandler(function() {
+            hideLoading();
+            showMessage("signupMessage", "Verification failed.", "error");
+        })
+        .verifyEmailCode(email, code);
+}
+
+/* ===== SIGNUP ===== */
+function setupSignup() {
+    const form = document.getElementById("signupForm");
+    if (!form) return;
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        clearMessage("signupMessage");
+
+        if (!emailVerified) {
+            showMessage("signupMessage", "Please verify your Gmail first.", "error");
+            return;
+        }
+
+        const password = getValue("signupPassword");
+        const confirmPassword = getValue("confirmPassword");
+
+        if (password.length < 8) return showMessage("signupMessage", "Password must contain at least 8 characters.", "error");
+        if (password !== confirmPassword) return showMessage("signupMessage", "Passwords do not match.", "error");
+
+        const user = {
+            name: getValue("name"), email: getValue("email"), mobile: getValue("mobile"),
+            username: getValue("username"), dob: getValue("dob"), gender: getValue("gender"),
+            region: getValue("region"), country: getValue("country"), password: password
+        };
+
+        if (!isAppsScript()) {
+            showMessage("signupMessage", "Open the deployed UDOY Web App to create an account.", "error");
+            return;
+        }
+
+        showLoading();
+        google.script.run
+            .withSuccessHandler(function(result) {
+                hideLoading();
+                if (result && result.success) {
+                    showMessage("signupMessage", result.message, "success");
+                    form.reset();
+                    emailVerified = false;
+                    document.getElementById("verificationBox")?.classList.add("hidden");
+                    setTimeout(showLogin, 1500);
+                } else {
+                    showMessage("signupMessage", result ? result.message : "Registration failed.", "error");
+                }
+            })
+            .withFailureHandler(function() {
+                hideLoading();
+                showMessage("signupMessage", "Account creation failed.", "error");
+            })
+            .registerUser(user);
+    });
+}
+
+/* ===== LOGIN ===== */
+function setupLogin() {
+    const form = document.getElementById("loginForm");
+    if (!form) return;
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        const username = getValue("loginUsername");
+        const password = getValue("loginPassword");
+
+        if (!username || !password) { alert("Enter username and password."); return; }
+
+        if (!isAppsScript()) {
+            alert("Login will work after connecting Google Apps Script.");
+            return;
+        }
+
+        showLoading();
+        google.script.run
+            .withSuccessHandler(function(result) {
+                hideLoading();
+                if (result && result.success) {
+                    currentUser = result.user;
+                    localStorage.setItem("udoy_user", JSON.stringify(result.user));
+                    openDashboard(result.user);
+                } else {
+                    alert(result ? result.message : "Login failed.");
+                }
+            })
+            .withFailureHandler(function() {
+                hideLoading();
+                alert("Login failed. Please try again.");
+            })
+            .loginUser(username, password);
+    });
+}
+
+/* ===== FORGOT PASSWORD ===== */
+function setupForgotPassword() {
+    const form = document.getElementById("forgotForm");
+    if (!form) return;
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        const email = getValue("forgotEmail");
+        if (!email) return showMessage("forgotMessage", "Please enter your Gmail.", "error");
+        showMessage("forgotMessage", "Password recovery will be connected to the backend.", "success");
+    });
+}
+
+/* ===== GET INPUT VALUE ===== */
+function getValue(id) {
+    const element = document.getElementById(id);
+    return element ? element.value.trim() : "";
+}
+
+/* ===== DASHBOARD ===== */
+function openDashboard(user) {
+    if (!user) return;
+    const name = document.getElementById("dashboardName");
+    const username = document.getElementById("dashboardUsername");
+    const initial = document.getElementById("profileInitial");
+
+    if (name) name.textContent = user.name || "User";
+    if (username) username.textContent = "@" + (user.username || "username");
+    if (initial) initial.textContent = (user.name || "U").charAt(0).toUpperCase();
+
+    showPage("dashboardPage");
+}
+
+/* ===== LOGOUT ===== */
+function logout() {
+    currentUser = null;
+    localStorage.removeItem("udoy_user");
+    document.getElementById("loginForm")?.reset();
+    showLogin();
+}
+
+/* ===== START APP ===== */
+document.addEventListener("DOMContentLoaded", function() {
+    setupLogin();
+    setupSignup();
+    setupForgotPassword();
+
+    try {
+        const saved = localStorage.getItem("udoy_user");
+        if (saved) {
+            const user = JSON.parse(saved);
+            if (user && user.username) {
+                currentUser = user;
+                openDashboard(user);
+            }
+        }
+    } catch (error) {
+        localStorage.removeItem("udoy_user");
+    }
+});
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+        navigator.serviceWorker.register("sw.js").catch(function(err) {
+            console.log("Service worker registration failed:", err);
+        });
+    });
+}
+</script>
+
+</body>
+</html>
