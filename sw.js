@@ -1,7 +1,8 @@
-const CACHE_NAME = "udoy-cache-v1";
+const CACHE_NAME = "udoy-cache-v2";
 const FILES_TO_CACHE = [
   "./index.html",
   "./manifest.json",
+  "./logo.png",
   "./icon-192.png",
   "./icon-512.png",
   "./icon-512-maskable.png"

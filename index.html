@@ -11,147 +11,626 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
+/* ============================================
+   UDOY — Design Tokens
+   Palette: Bottle Green #0F3D2E · Marigold #E8A33D
+            Rust Clay #C1502E · Paper #FBF6EC
+            Ink #1B2420 · Sage #6B8F7B
+   Type: Space Grotesk (display) · Inter (body)
+         IBM Plex Mono (labels/eyebrows)
+   Signature: stitched "kantha" running-dash borders
+              + circular seal badge
+============================================ */
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 :root {
-    --ink: #1B2420; --paper: #FBF6EC; --paper-dim: #F3EBDA;
-    --green: #0F3D2E; --green-deep: #0A2A20; --gold: #E8A33D; --gold-deep: #C6822A;
-    --rust: #C1502E; --sage: #6B8F7B; --line: #E3D9C2; --white: #FFFFFF;
-    --error-bg: #FBE3DC; --error-ink: #93321A; --success-bg: #E4EEE1; --success-ink: #1F5C3E;
+    --ink: #1B2420;
+    --paper: #FBF6EC;
+    --paper-dim: #F3EBDA;
+    --green: #0F3D2E;
+    --green-deep: #0A2A20;
+    --gold: #E8A33D;
+    --gold-deep: #C6822A;
+    --rust: #C1502E;
+    --sage: #6B8F7B;
+    --line: #E3D9C2;
+    --white: #FFFFFF;
+    --error-bg: #FBE3DC;
+    --error-ink: #93321A;
+    --success-bg: #E4EEE1;
+    --success-ink: #1F5C3E;
+
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
 }
+
 html { -webkit-tap-highlight-color: transparent; }
-body { font-family: var(--font-body); background: var(--paper); color: var(--ink); min-height: 100vh;
-    background-image: radial-gradient(circle at 1px 1px, rgba(15,61,46,0.06) 1px, transparent 1px);
-    background-size: 18px 18px; }
+
+body {
+    font-family: var(--font-body);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+        radial-gradient(circle at 1px 1px, rgba(15,61,46,0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+}
+
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
+
 @media (prefers-reduced-motion: no-preference) {
     .page.active { animation: fadeUp .38s ease both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 }
-.app { width: 100%; max-width: 480px; min-height: 100vh; margin: auto; padding: 22px 18px 48px; position: relative; }
+
+.app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    margin: auto;
+    padding: 22px 18px 48px;
+    position: relative;
+}
+
 .page { display: none; }
 .page.active { display: block; }
-.stitch { height: 10px; background-image: repeating-linear-gradient(90deg, var(--gold) 0 8px, transparent 8px 16px); opacity: .8; margin: 0 0 22px; border-radius: 2px; }
+
+/* stitched running-dash rule — the signature motif */
+.stitch {
+    height: 10px;
+    background-image: repeating-linear-gradient(
+        90deg, var(--gold) 0 8px, transparent 8px 16px
+    );
+    opacity: .8;
+    margin: 0 0 22px;
+    border-radius: 2px;
+}
 .stitch.small { height: 6px; margin: 14px 0; }
+
+/* ===== BRAND / SEAL ===== */
+
 .brand { text-align: center; padding: 18px 8px 8px; }
-.seal { width: 84px; height: 84px; margin: auto; border-radius: 50%; background: var(--green); color: var(--paper);
-    display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
-    font-size: 34px; font-weight: 700; position: relative; box-shadow: 0 12px 26px rgba(15,61,46,.28); }
-.seal::before { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 2px dashed var(--gold); }
-.brand .eyebrow { margin-top: 16px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em;
-    text-transform: uppercase; color: var(--rust); font-weight: 500; }
-.brand h1 { font-family: var(--font-display); margin-top: 6px; font-size: 34px; letter-spacing: .02em; color: var(--green-deep); }
-.brand p { margin-top: 6px; color: var(--sage); font-size: 13px; line-height: 1.5; max-width: 300px; margin-inline: auto; }
-.card { background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 26px 22px;
-    box-shadow: 0 4px 0 var(--line); position: relative; overflow: hidden; }
-.card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 5px;
-    background: repeating-linear-gradient(90deg, var(--gold) 0 8px, transparent 8px 16px); }
-.card h2 { font-family: var(--font-display); font-size: 23px; color: var(--green-deep); margin-top: 4px; }
-.subtitle { color: var(--sage); margin-top: 6px; margin-bottom: 24px; font-size: 13.5px; }
+
+.brand-logo {
+    width: 128px;
+    height: auto;
+    margin: auto;
+    display: block;
+}
+
+.seal {
+    width: 84px; height: 84px; margin: auto;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 34px; font-weight: 700;
+    position: relative;
+    box-shadow: 0 12px 26px rgba(15,61,46,.28);
+}
+.seal::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    border: 2px dashed var(--gold);
+}
+
+.brand .eyebrow {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--rust);
+    font-weight: 500;
+}
+
+.brand h1 {
+    font-family: var(--font-display);
+    margin-top: 6px;
+    font-size: 34px;
+    letter-spacing: .02em;
+    color: var(--green-deep);
+}
+
+.brand p {
+    margin-top: 6px;
+    color: var(--sage);
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 300px;
+    margin-inline: auto;
+}
+
+/* ===== CARD ===== */
+
+.card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 26px 22px;
+    box-shadow: 0 4px 0 var(--line);
+    position: relative;
+    overflow: hidden;
+}
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 5px;
+    background: repeating-linear-gradient(
+        90deg, var(--gold) 0 8px, transparent 8px 16px
+    );
+}
+
+.card h2 {
+    font-family: var(--font-display);
+    font-size: 23px;
+    color: var(--green-deep);
+    margin-top: 4px;
+}
+
+.subtitle {
+    color: var(--sage);
+    margin-top: 6px;
+    margin-bottom: 24px;
+    font-size: 13.5px;
+}
+
+/* ===== INPUTS ===== */
+
 .input-group { margin-bottom: 16px; }
-.input-group label { display: block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
-    letter-spacing: .09em; text-transform: uppercase; color: var(--sage); margin-bottom: 8px; }
-input, select { width: 100%; height: 48px; border: 1.5px solid var(--line); border-radius: 12px; padding: 0 14px;
-    background: var(--paper); outline: none; color: var(--ink); transition: border-color .15s, background .15s; }
+
+.input-group label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 8px;
+}
+
+input, select {
+    width: 100%;
+    height: 48px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 0 14px;
+    background: var(--paper);
+    outline: none;
+    color: var(--ink);
+    transition: border-color .15s, background .15s;
+}
 input::placeholder { color: #A79F8C; }
-input:focus, select:focus { border-color: var(--green); background: var(--white); }
-select { appearance: none;
-    background-image: linear-gradient(45deg, transparent 50%, var(--sage) 50%), linear-gradient(135deg, var(--sage) 50%, transparent 50%);
+
+input:focus, select:focus {
+    border-color: var(--green);
+    background: var(--white);
+}
+
+select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--sage) 50%),
+                       linear-gradient(135deg, var(--sage) 50%, transparent 50%);
     background-position: calc(100% - 20px) center, calc(100% - 15px) center;
-    background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+
 .password-box { position: relative; }
 .password-box input { padding-right: 68px; }
-.show-password { position: absolute; right: 6px; top: 6px; height: 36px; padding: 0 10px; border: none;
-    background: transparent; color: var(--rust); font-family: var(--font-mono); font-size: 10.5px;
-    font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
-.primary-btn, .secondary-btn { width: 100%; min-height: 50px; border-radius: 12px; font-family: var(--font-display);
-    font-weight: 600; font-size: 15px; border: none; transition: transform .12s ease, filter .12s ease; }
-.primary-btn { background: var(--green); color: var(--paper); }
+
+.show-password {
+    position: absolute;
+    right: 6px; top: 6px; height: 36px; padding: 0 10px;
+    border: none; background: transparent;
+    color: var(--rust);
+    font-family: var(--font-mono);
+    font-size: 10.5px; font-weight: 500; letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+/* ===== BUTTONS ===== */
+
+.primary-btn, .secondary-btn {
+    width: 100%; min-height: 50px;
+    border-radius: 12px;
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 15px;
+    border: none;
+    transition: transform .12s ease, filter .12s ease;
+}
+
+.primary-btn {
+    background: var(--green);
+    color: var(--paper);
+}
 .primary-btn:active { transform: scale(.97); filter: brightness(.95); }
-.secondary-btn { background: var(--paper-dim); color: var(--green-deep); border: 1.5px dashed var(--gold-deep); }
+
+.secondary-btn {
+    background: var(--paper-dim);
+    color: var(--green-deep);
+    border: 1.5px dashed var(--gold-deep);
+}
 .secondary-btn:active { transform: scale(.97); }
-.text-btn { display: block; margin: 18px auto 0; background: transparent; border: none; color: var(--rust); font-weight: 600; font-size: 13px; }
-.separator { display: flex; align-items: center; gap: 12px; margin: 24px 0; font-family: var(--font-mono);
-    color: var(--sage); font-size: 10.5px; letter-spacing: .1em; }
-.separator::before, .separator::after { content: ""; height: 1px; background: var(--line); flex: 1; }
-.top-header { display: flex; align-items: center; gap: 12px; margin: 6px 0 22px; }
-.top-header h2 { font-family: var(--font-display); font-size: 21px; color: var(--green-deep); }
+
+.text-btn {
+    display: block;
+    margin: 18px auto 0;
+    background: transparent; border: none;
+    color: var(--rust);
+    font-weight: 600; font-size: 13px;
+}
+
+.separator {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0;
+    font-family: var(--font-mono);
+    color: var(--sage); font-size: 10.5px; letter-spacing: .1em;
+}
+.separator::before, .separator::after {
+    content: ""; height: 1px; background: var(--line); flex: 1;
+}
+
+/* ===== HEADER (signup / forgot) ===== */
+
+.top-header {
+    display: flex; align-items: center; gap: 12px;
+    margin: 6px 0 22px;
+}
+
+.top-header h2 {
+    font-family: var(--font-display);
+    font-size: 21px;
+    color: var(--green-deep);
+}
 .top-header p { color: var(--sage); font-size: 12.5px; margin-top: 2px; }
-.back-btn { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--white);
-    font-size: 22px; line-height: 1; color: var(--green-deep); display: flex; align-items: center; justify-content: center; }
+
+.back-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: var(--white);
+    font-size: 22px; line-height: 1;
+    color: var(--green-deep);
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ===== VERIFY ROW ===== */
+
 .verify-row { display: flex; gap: 8px; }
 .verify-row input { flex: 1; }
-.verify-btn { width: 82px; border: none; border-radius: 12px; background: var(--gold); color: var(--green-deep);
-    font-family: var(--font-display); font-size: 12.5px; font-weight: 700; }
+.verify-btn {
+    width: 82px; border: none; border-radius: 12px;
+    background: var(--gold); color: var(--green-deep);
+    font-family: var(--font-display);
+    font-size: 12.5px; font-weight: 700;
+}
 .verify-btn:active { filter: brightness(.95); }
+
 .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.message { display: none; padding: 12px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 13px;
-    line-height: 1.5; border-left: 3px solid transparent; }
+
+/* ===== MESSAGE ===== */
+
+.message {
+    display: none;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-left: 3px solid transparent;
+}
 .message.show { display: block; }
 .message.error { background: var(--error-bg); color: var(--error-ink); border-color: var(--rust); }
 .message.success { background: var(--success-bg); color: var(--success-ink); border-color: var(--green); }
 .hidden { display: none !important; }
-.dashboard-header { display: flex; justify-content: space-between; align-items: flex-start; margin: 8px 0 22px; }
-.dashboard-header .eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--rust); }
-.dashboard-header h1 { font-family: var(--font-display); font-size: 27px; color: var(--green-deep); margin-top: 4px; }
-.logout-btn { border: 1.5px solid var(--line); background: var(--white); color: var(--rust); padding: 10px 16px;
-    border-radius: 20px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .04em; }
-.welcome-card { background: var(--green); color: var(--paper); border-radius: 20px; padding: 22px;
-    display: flex; align-items: center; gap: 16px; box-shadow: 0 10px 25px rgba(15,61,46,.22);
-    position: relative; overflow: hidden; }
-.welcome-card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 5px;
-    background: repeating-linear-gradient(90deg, var(--gold) 0 8px, transparent 8px 16px); }
+
+/* ===== DASHBOARD ===== */
+
+.dashboard-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin: 8px 0 22px;
+    position: relative;
+    z-index: 1;
+}
+.dashboard-watermark {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    opacity: .06;
+    pointer-events: none;
+    z-index: 0;
+}
+.dashboard-header .eyebrow {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--rust);
+}
+.dashboard-header h1 {
+    font-family: var(--font-display);
+    font-size: 27px; color: var(--green-deep); margin-top: 4px;
+}
+
+.logout-btn {
+    border: 1.5px solid var(--line);
+    background: var(--white); color: var(--rust);
+    padding: 10px 16px; border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 500; letter-spacing: .04em;
+}
+
+.welcome-card {
+    background: var(--green);
+    color: var(--paper);
+    border-radius: 20px;
+    padding: 22px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 10px 25px rgba(15,61,46,.22);
+    position: relative;
+    overflow: hidden;
+}
+.welcome-card::after {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 5px;
+    background: repeating-linear-gradient(90deg, var(--gold) 0 8px, transparent 8px 16px);
+}
+
 .small-text { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--sage); }
 .welcome-card .small-text { color: rgba(251,246,236,.65); }
-.profile-circle { width: 56px; height: 56px; border-radius: 50%; background: var(--gold); color: var(--green-deep);
-    display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
-    font-size: 22px; font-weight: 700; flex-shrink: 0; }
+
+.profile-circle {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--gold); color: var(--green-deep);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 700;
+    flex-shrink: 0;
+}
+
 .welcome-card h2 { font-family: var(--font-display); margin: 4px 0 2px; font-size: 19px; }
 .welcome-card p:last-child { color: rgba(251,246,236,.7); font-size: 12.5px; }
-.feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
-.feature-card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 18px; transition: transform .12s ease; }
+
+.feature-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-top: 18px;
+}
+
+.feature-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    transition: transform .12s ease;
+}
 .feature-card:active { transform: scale(.97); }
-.feature-card .icon { width: 38px; height: 38px; border-radius: 10px; background: var(--paper-dim);
-    display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
+
+.feature-card .icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--paper-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
 .feature-card h3 { font-family: var(--font-display); font-size: 15px; color: var(--green-deep); }
 .feature-card p { color: var(--sage); font-size: 11.5px; margin-top: 4px; line-height: 1.4; }
-.dashboard-info { background: var(--paper-dim); border: 1.5px dashed var(--gold-deep); border-radius: 16px; padding: 18px; margin-top: 16px; }
+
+.dashboard-info {
+    background: var(--paper-dim);
+    border: 1.5px dashed var(--gold-deep);
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 16px;
+}
 .dashboard-info h3 { font-family: var(--font-display); font-size: 14.5px; color: var(--green-deep); }
 .dashboard-info p { color: var(--sage); font-size: 12.5px; margin-top: 6px; line-height: 1.5; }
-.loading { position: fixed; inset: 0; background: rgba(251,246,236,.92); display: flex; flex-direction: column;
-    align-items: center; justify-content: center; z-index: 999; }
-.loading p { margin-top: 14px; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; color: var(--sage); }
-.loader { width: 40px; height: 40px; border: 3px solid var(--line); border-top-color: var(--gold);
-    border-radius: 50%; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 2px; }
-@media (max-width: 380px) {
-    .app { padding: 16px 14px 40px; } .card { padding: 20px 16px; }
-    .two-column { grid-template-columns: 1fr; gap: 0; } .verify-btn { width: 74px; } .brand h1 { font-size: 29px; }
+
+/* ===== LOADING ===== */
+
+.loading {
+    position: fixed; inset: 0;
+    background: rgba(251,246,236,.92);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 999;
 }
+.loading p {
+    margin-top: 14px; font-family: var(--font-mono);
+    font-size: 11.5px; letter-spacing: .06em; color: var(--sage);
+}
+.loader {
+    width: 40px; height: 40px;
+    border: 3px solid var(--line);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== FOCUS STATES (accessibility) ===== */
+button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--gold-deep);
+    outline-offset: 2px;
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 380px) {
+    .app { padding: 16px 14px 40px; }
+    .card { padding: 20px 16px; }
+    .two-column { grid-template-columns: 1fr; gap: 0; }
+    .verify-btn { width: 74px; }
+    .brand h1 { font-size: 29px; }
+}
+
+/* ===== HOME HUB ===== */
+
+.icon-circle-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--green); color: var(--paper);
+    border: none; font-family: var(--font-display); font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.settings-menu {
+    position: absolute;
+    top: 60px; left: 22px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.1);
+    z-index: 20;
+    overflow: hidden;
+    min-width: 200px;
+}
+.settings-menu button {
+    display: block; width: 100%; text-align: left;
+    padding: 14px 16px; border: none; background: var(--white);
+    font-size: 14px; color: var(--ink);
+    border-bottom: 1px solid var(--line);
+}
+.settings-menu button:last-child { border-bottom: none; }
+.settings-menu button:active { background: var(--paper-dim); }
+
+.policy-btn {
+    width: 100%; margin: 16px 0 4px;
+    border: 1.5px dashed var(--gold-deep);
+    background: var(--paper-dim);
+    color: var(--green-deep);
+    border-radius: 14px;
+    padding: 14px;
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 14px;
+}
+
+.sector-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-top: 18px;
+}
+.sector-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 20px 16px;
+    text-align: left;
+    transition: transform .12s ease;
+}
+.sector-card:active { transform: scale(.96); }
+.sector-card .icon { font-size: 26px; margin-bottom: 10px; }
+.sector-card h3 { font-family: var(--font-display); font-size: 15.5px; color: var(--green-deep); }
+.sector-card p { color: var(--sage); font-size: 11.5px; margin-top: 4px; line-height: 1.4; }
+
+.mini-fab-stack {
+    position: fixed;
+    right: 18px; bottom: 24px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 30;
+}
+.mini-fab {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--green); color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; text-decoration: none; border: none;
+    box-shadow: 0 8px 18px rgba(15,61,46,.3);
+}
+
+/* ===== TABS ===== */
+
+.tab-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab-btn {
+    flex: 1; padding: 10px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: var(--white);
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+    color: var(--sage);
+}
+.tab-btn.active { background: var(--green); color: var(--paper); border-color: var(--green); }
+
+.policy-list { min-height: 40px; }
+.policy-empty { color: var(--sage); font-size: 13px; }
+
+/* ===== LIST ITEMS (notices / admin rows) ===== */
+
+.list-item {
+    background: var(--paper-dim);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+}
+.list-item h4 { font-family: var(--font-display); font-size: 14.5px; color: var(--green-deep); }
+.list-item p { color: var(--ink); font-size: 12.5px; margin-top: 4px; line-height: 1.5; }
+.list-item .meta { color: var(--sage); font-size: 10.5px; margin-top: 6px; font-family: var(--font-mono); }
+.list-item .row-actions { display: flex; gap: 8px; margin-top: 10px; }
+.list-item .row-actions button {
+    border: none; border-radius: 8px; padding: 8px 12px;
+    font-size: 11px; font-weight: 600; font-family: var(--font-mono);
+}
+.btn-verify { background: var(--success-bg); color: var(--success-ink); }
+.btn-reject { background: var(--error-bg); color: var(--error-ink); }
+.btn-delete { background: var(--error-bg); color: var(--error-ink); }
+
+/* ===== CHAT ===== */
+
+.message-list {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 4px 0;
+}
+.chat-bubble {
+    background: var(--paper-dim);
+    border-radius: 14px;
+    padding: 10px 12px;
+    max-width: 85%;
+}
+.chat-bubble .who {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--rust); letter-spacing: .04em; margin-bottom: 2px;
+}
+.chat-bubble .text { font-size: 13px; color: var(--ink); }
+.chat-bubble.mine { align-self: flex-end; background: var(--green); }
+.chat-bubble.mine .text { color: var(--paper); }
+.chat-bubble.mine .who { color: var(--gold); }
 </style>
 </head>
+
 <body>
+
 <div class="app">
+
+    <!-- LOGIN PAGE -->
     <section id="loginPage" class="page active">
+
         <div class="brand">
-            <div class="seal">U</div>
+            <img src="logo.png" alt="UDOY logo" class="brand-logo">
             <p class="eyebrow">Est. Community · Bangladesh</p>
             <h1>UDOY</h1>
             <p>Unity for Development & Opportunity of Youth</p>
         </div>
+
         <div class="card">
+
             <h2>Welcome back</h2>
             <p class="subtitle">Sign in to continue with your UDOY account</p>
+
             <form id="loginForm">
+
                 <div class="input-group">
                     <label for="loginUsername">Username</label>
                     <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username" required>
                 </div>
+
                 <div class="input-group">
                     <label for="loginPassword">Password</label>
                     <div class="password-box">
@@ -159,26 +638,44 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
                         <button type="button" class="show-password" onclick="togglePassword('loginPassword', this)">Show</button>
                     </div>
                 </div>
+
                 <button class="primary-btn" type="submit">Sign In</button>
+
             </form>
+
             <button class="text-btn" type="button" onclick="showForgot()">Forgot password?</button>
+
             <div class="separator"><span>OR</span></div>
+
             <button class="secondary-btn" type="button" onclick="showSignup()">Create new account</button>
+
         </div>
+
     </section>
 
+
+    <!-- SIGNUP PAGE -->
     <section id="signupPage" class="page">
+
         <div class="top-header">
             <button class="back-btn" onclick="showLogin()" aria-label="Back">‹</button>
-            <div><h2>Create account</h2><p>Join the UDOY community</p></div>
+            <div>
+                <h2>Create account</h2>
+                <p>Join the UDOY community</p>
+            </div>
         </div>
+
         <div class="card signup-card">
+
             <div id="signupMessage" class="message"></div>
+
             <form id="signupForm">
+
                 <div class="input-group">
                     <label for="name">Full name</label>
                     <input type="text" id="name" placeholder="Enter your full name" required>
                 </div>
+
                 <div class="input-group">
                     <label for="email">Gmail</label>
                     <div class="verify-row">
@@ -186,6 +683,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
                         <button type="button" class="verify-btn" onclick="sendVerificationCode()">Verify</button>
                     </div>
                 </div>
+
                 <div class="input-group hidden" id="verificationBox">
                     <label for="verificationCode">Verification code</label>
                     <div class="verify-row">
@@ -193,14 +691,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
                         <button type="button" class="verify-btn" onclick="verifyEmail()">Confirm</button>
                     </div>
                 </div>
+
                 <div class="input-group">
                     <label for="mobile">Mobile number</label>
                     <input type="tel" id="mobile" placeholder="01XXXXXXXXX" required>
                 </div>
+
                 <div class="input-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" placeholder="Choose a username" required>
                 </div>
+
                 <div class="two-column">
                     <div class="input-group">
                         <label for="dob">Date of birth</label>
@@ -216,6 +717,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
                         </select>
                     </div>
                 </div>
+
                 <div class="two-column">
                     <div class="input-group">
                         <label for="region">Region</label>
@@ -226,6 +728,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
                         <input type="text" id="country" value="Bangladesh" required>
                     </div>
                 </div>
+
                 <div class="input-group">
                     <label for="signupPassword">Password</label>
                     <div class="password-box">
@@ -233,23 +736,38 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
                         <button type="button" class="show-password" onclick="togglePassword('signupPassword', this)">Show</button>
                     </div>
                 </div>
+
                 <div class="input-group">
                     <label for="confirmPassword">Confirm password</label>
                     <input type="password" id="confirmPassword" placeholder="Confirm password" required>
                 </div>
+
                 <button class="primary-btn" type="submit">Create account</button>
+
             </form>
+
             <button class="text-btn" onclick="showLogin()">Already have an account? Sign in</button>
+
         </div>
+
     </section>
 
+
+    <!-- FORGOT PASSWORD -->
     <section id="forgotPage" class="page">
+
         <div class="top-header">
             <button class="back-btn" onclick="showLogin()" aria-label="Back">‹</button>
-            <div><h2>Reset password</h2><p>Recover your account</p></div>
+            <div>
+                <h2>Reset password</h2>
+                <p>Recover your account</p>
+            </div>
         </div>
+
         <div class="card">
+
             <div id="forgotMessage" class="message"></div>
+
             <form id="forgotForm">
                 <div class="input-group">
                     <label for="forgotEmail">Gmail</label>
@@ -257,34 +775,332 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
                 </div>
                 <button type="submit" class="primary-btn">Send reset code</button>
             </form>
+
         </div>
+
     </section>
 
-    <section id="dashboardPage" class="page">
+
+    <!-- HOME -->
+    <section id="homePage" class="page">
+
+        <img src="logo.png" alt="" class="dashboard-watermark" aria-hidden="true">
+
         <div class="dashboard-header">
-            <div><p class="eyebrow">Welcome to</p><h1>UDOY</h1></div>
+            <button class="icon-circle-btn" onclick="toggleSettingsMenu()" aria-label="Settings">
+                <span id="settingsAvatar">U</span>
+            </button>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
+
+        <div id="settingsMenu" class="settings-menu hidden">
+            <button onclick="goToProfile()">👤 Profile</button>
+            <button onclick="goToSettings()">🔒 Password & Privacy</button>
+        </div>
+
         <div class="welcome-card">
             <div class="profile-circle" id="profileInitial">U</div>
             <div>
                 <p class="small-text">Welcome back</p>
                 <h2 id="dashboardName">User</h2>
-                <p id="dashboardUsername">@username</p>
+                <p id="dashboardUsername">@username · <span id="dashboardMemberId">UDOY-000</span></p>
             </div>
         </div>
+
+        <button class="policy-btn" onclick="showPage('policyPage')">📜 UDOY POLICY</button>
+
         <div class="stitch small"></div>
-        <div class="feature-grid">
-            <div class="feature-card"><div class="icon">📢</div><h3>Notices</h3><p>Latest UDOY updates</p></div>
-            <div class="feature-card"><div class="icon">💬</div><h3>Messages</h3><p>Your conversations</p></div>
-            <div class="feature-card"><div class="icon">👤</div><h3>Profile</h3><p>Manage your profile</p></div>
-            <div class="feature-card"><div class="icon">📊</div><h3>Reports</h3><p>View your reports</p></div>
+
+        <div class="sector-grid">
+            <button class="sector-card" onclick="showPage('memberMenuPage')">
+                <div class="icon">🪪</div>
+                <h3>Member</h3>
+                <p>Registration, payment & ID</p>
+            </button>
+            <button class="sector-card" onclick="openAdminGate()">
+                <div class="icon">🛠️</div>
+                <h3>Admin</h3>
+                <p>Department panels</p>
+            </button>
+            <button class="sector-card" onclick="openNoticeBoard()">
+                <div class="icon">📢</div>
+                <h3>Notice Board</h3>
+                <p>Latest UDOY updates</p>
+            </button>
+            <button class="sector-card" onclick="openMessageBox()">
+                <div class="icon">💬</div>
+                <h3>Message Box</h3>
+                <p>Community chat</p>
+            </button>
         </div>
+
         <div class="dashboard-info">
             <h3>UDOY Community</h3>
             <p>Unity for Development & Opportunity of Youth</p>
         </div>
+
+        <div class="mini-fab-stack">
+            <a class="mini-fab" href="https://www.facebook.com/share/1DG42oQcSZ/" target="_blank" rel="noopener" title="Facebook page">📘</a>
+            <a class="mini-fab" href="tel:01806575737" title="Helpline">☎️</a>
+            <button class="mini-fab" onclick="showPage('reportPage')" title="Report">⚠️</button>
+        </div>
+
     </section>
+
+
+    <!-- UDOY POLICY -->
+    <section id="policyPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>UDOY Policy</h2><p>Official community policies</p></div>
+        </div>
+        <div class="card">
+            <div class="tab-row">
+                <button class="tab-btn active" id="policyTabBn" onclick="switchPolicyTab('bn')">বাংলা</button>
+                <button class="tab-btn" id="policyTabEn" onclick="switchPolicyTab('en')">English</button>
+            </div>
+            <div id="policyListBn" class="policy-list"></div>
+            <div id="policyListEn" class="policy-list hidden"></div>
+            <p class="subtitle" style="margin-top:16px;">Policies are uploaded by the HR Department. Contact HR to publish new documents.</p>
+        </div>
+    </section>
+
+
+    <!-- MEMBER MENU -->
+    <section id="memberMenuPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Member</h2><p>Registration, payment & ID</p></div>
+        </div>
+        <div class="card">
+            <button class="primary-btn" style="margin-bottom:12px;" onclick="openRegistrationForm()">📝 Registration Form</button>
+            <button class="secondary-btn" style="margin-bottom:12px;" onclick="showPage('paymentPage')">💳 Payment</button>
+            <button class="secondary-btn" onclick="showPage('checkIdPage')">🔎 Check ID</button>
+        </div>
+    </section>
+
+
+    <!-- PAYMENT -->
+    <section id="paymentPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('memberMenuPage')" aria-label="Back">‹</button>
+            <div><h2>Payment</h2><p>Minimum ৳50 per month · bKash/Nagad: 01806575737</p></div>
+        </div>
+        <div class="card">
+            <div id="paymentMessage" class="message"></div>
+            <form id="paymentForm">
+                <div class="input-group">
+                    <label for="payAmount">Amount (৳)</label>
+                    <input type="number" id="payAmount" min="50" placeholder="e.g. 50" required>
+                </div>
+                <div class="input-group">
+                    <label for="payMethod">Method</label>
+                    <select id="payMethod" required>
+                        <option value="">Select</option>
+                        <option value="bKash">bKash</option>
+                        <option value="Nagad">Nagad</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="payPurpose">Purpose</label>
+                    <input type="text" id="payPurpose" placeholder="e.g. Monthly membership fee" required>
+                </div>
+                <div class="input-group">
+                    <label for="payMonth">Month</label>
+                    <input type="month" id="payMonth" required>
+                </div>
+                <button class="primary-btn" type="submit">Submit Payment</button>
+            </form>
+        </div>
+    </section>
+
+
+    <!-- CHECK ID -->
+    <section id="checkIdPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('memberMenuPage')" aria-label="Back">‹</button>
+            <div><h2>Check ID</h2><p>Search by Member ID or username</p></div>
+        </div>
+        <div class="card">
+            <div id="checkIdMessage" class="message"></div>
+            <div class="verify-row">
+                <input type="text" id="checkIdInput" placeholder="e.g. UDOY-001 or username">
+                <button class="verify-btn" onclick="doCheckId()">Search</button>
+            </div>
+            <div id="checkIdResult"></div>
+        </div>
+    </section>
+
+
+    <!-- NOTICE BOARD -->
+    <section id="noticeBoardPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Notice Board</h2><p>Latest UDOY updates</p></div>
+        </div>
+        <div class="card">
+            <div id="noticeListEmpty" class="subtitle">Loading notices…</div>
+            <div id="noticeList"></div>
+        </div>
+    </section>
+
+
+    <!-- MESSAGE BOX -->
+    <section id="messageBoxPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Message Box</h2><p>Community group chat</p></div>
+        </div>
+        <div class="card">
+            <button class="text-btn" style="margin:0 0 12px;" onclick="loadMessages()">↻ Refresh</button>
+            <div id="messageList" class="message-list"></div>
+            <div class="verify-row" style="margin-top:14px;">
+                <input type="text" id="messageInput" placeholder="Type a message…">
+                <button class="verify-btn" onclick="doSendMessage()">Send</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- REPORT -->
+    <section id="reportPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Report</h2><p>Tell the R&R department</p></div>
+        </div>
+        <div class="card">
+            <div id="reportMessage" class="message"></div>
+            <form id="reportForm">
+                <div class="input-group">
+                    <label for="reportSubject">Subject</label>
+                    <input type="text" id="reportSubject" placeholder="Short subject" required>
+                </div>
+                <div class="input-group">
+                    <label for="reportDescription">Description</label>
+                    <input type="text" id="reportDescription" placeholder="Describe the issue" required>
+                </div>
+                <button class="primary-btn" type="submit">Submit Report</button>
+            </form>
+        </div>
+    </section>
+
+
+    <!-- PROFILE -->
+    <section id="profilePage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Profile</h2><p>Your UDOY identity</p></div>
+        </div>
+        <div class="card" id="profileCard"></div>
+    </section>
+
+
+    <!-- SETTINGS (Password & Privacy) -->
+    <section id="settingsPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Password & Privacy</h2><p>Manage your account security</p></div>
+        </div>
+        <div class="card">
+            <div id="settingsMessage" class="message"></div>
+            <form id="changePasswordForm">
+                <div class="input-group">
+                    <label for="oldPassword">Current password</label>
+                    <input type="password" id="oldPassword" required>
+                </div>
+                <div class="input-group">
+                    <label for="newPassword">New password</label>
+                    <input type="password" id="newPassword" required>
+                </div>
+                <button class="primary-btn" type="submit">Change Password</button>
+            </form>
+            <div class="stitch small"></div>
+            <p class="subtitle">2FA verification — coming soon.</p>
+        </div>
+    </section>
+
+
+    <!-- ADMIN GATE -->
+    <section id="adminGatePage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Admin</h2><p>Department login required</p></div>
+        </div>
+        <div class="card">
+            <div id="adminGateMessage" class="message"></div>
+            <div class="input-group">
+                <label for="adminDept">Department</label>
+                <select id="adminDept">
+                    <option value="HR">HR Department</option>
+                    <option value="FD">Financial Department</option>
+                    <option value="RR">Report & Registration Department</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="adminUsername">Admin username</label>
+                <input type="text" id="adminUsername" placeholder="Admin username">
+            </div>
+            <div class="input-group">
+                <label for="adminPassword">Admin password</label>
+                <input type="password" id="adminPassword" placeholder="Admin password">
+            </div>
+            <button class="primary-btn" onclick="doAdminLogin()">Login</button>
+        </div>
+    </section>
+
+
+    <!-- ADMIN: HR -->
+    <section id="adminHRPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>HR Department</h2><p>Notices & policies</p></div>
+        </div>
+        <div class="card">
+            <div id="hrMessage" class="message"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Post a notice</h3>
+            <div class="input-group">
+                <input type="text" id="hrNoticeTitle" placeholder="Notice title">
+            </div>
+            <div class="input-group">
+                <input type="text" id="hrNoticeContent" placeholder="Notice content">
+            </div>
+            <button class="primary-btn" onclick="hrPostNotice()">Post Notice</button>
+            <div class="stitch small"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Existing notices</h3>
+            <div id="hrNoticeList"></div>
+        </div>
+    </section>
+
+
+    <!-- ADMIN: Financial -->
+    <section id="adminFDPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Financial Department</h2><p>Payments & accounts</p></div>
+        </div>
+        <div class="card">
+            <div id="fdMessage" class="message"></div>
+            <div id="fdPaymentList"></div>
+        </div>
+    </section>
+
+
+    <!-- ADMIN: Report & Registration -->
+    <section id="adminRRPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <div><h2>Report & Registration</h2><p>Reports & member directory</p></div>
+        </div>
+        <div class="card">
+            <div id="rrMessage" class="message"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Reports</h3>
+            <div id="rrReportList"></div>
+            <div class="stitch small"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Member directory</h3>
+            <div id="rrMemberList"></div>
+        </div>
+    </section>
+
 </div>
 
 <div id="loading" class="loading hidden">
@@ -293,11 +1109,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 </div>
 
 <script>
+/* =========================================================
+   UDOY backend connection
+   Replace this with your own Apps Script Web App URL if
+   you redeploy and get a new one.
+========================================================= */
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbx57biyYS32HysAgqQhi3WlEebFBzuORngpzqb00qsaevlDUUzwKKpl4gHRz2GkPMvKsg/exec";
 
 let emailVerified = false;
 let currentUser = null;
 
+/* ===== PAGE CONTROL ===== */
 function showPage(pageId) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     const page = document.getElementById(pageId);
@@ -307,16 +1129,24 @@ function showLogin() { showPage("loginPage"); }
 function showSignup() { showPage("signupPage"); }
 function showForgot() { showPage("forgotPage"); }
 
+/* ===== PASSWORD ===== */
 function togglePassword(inputId, button) {
     const input = document.getElementById(inputId);
     if (!input) return;
-    if (input.type === "password") { input.type = "text"; button.textContent = "Hide"; }
-    else { input.type = "password"; button.textContent = "Show"; }
+    if (input.type === "password") {
+        input.type = "text";
+        button.textContent = "Hide";
+    } else {
+        input.type = "password";
+        button.textContent = "Show";
+    }
 }
 
+/* ===== LOADING ===== */
 function showLoading() { document.getElementById("loading")?.classList.remove("hidden"); }
 function hideLoading() { document.getElementById("loading")?.classList.add("hidden"); }
 
+/* ===== MESSAGE ===== */
 function showMessage(id, msg, type) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -326,9 +1156,16 @@ function showMessage(id, msg, type) {
 function clearMessage(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = ""; el.className = "message";
+    el.textContent = "";
+    el.className = "message";
 }
 
+/* =========================================================
+   BACKEND CALL — talks to the deployed Apps Script Web App
+   using a plain fetch() POST with an "action" field, since
+   this page is hosted on GitHub Pages (not inside Apps
+   Script), so google.script.run is not available here.
+========================================================= */
 async function callBackend(action, payload) {
     const response = await fetch(BACKEND_URL, {
         method: "POST",
@@ -338,12 +1175,15 @@ async function callBackend(action, payload) {
     return response.json();
 }
 
+/* ===== EMAIL VERIFICATION ===== */
 async function sendVerificationCode() {
     const emailElement = document.getElementById("email");
     if (!emailElement) return;
     const email = emailElement.value.trim();
+
     if (!email) return showMessage("signupMessage", "Please enter your Gmail address.", "error");
     if (!email.toLowerCase().endsWith("@gmail.com")) return showMessage("signupMessage", "Please use a Gmail address.", "error");
+
     showLoading();
     try {
         const result = await callBackend("sendVerificationCode", { email: email });
@@ -364,9 +1204,12 @@ async function verifyEmail() {
     const emailElement = document.getElementById("email");
     const codeElement = document.getElementById("verificationCode");
     if (!emailElement || !codeElement) return;
+
     const email = emailElement.value.trim();
     const code = codeElement.value.trim();
+
     if (!code) return showMessage("signupMessage", "Enter the verification code.", "error");
+
     showLoading();
     try {
         const result = await callBackend("verifyEmailCode", { email: email, code: code });
@@ -385,22 +1228,32 @@ async function verifyEmail() {
     }
 }
 
+/* ===== SIGNUP ===== */
 function setupSignup() {
     const form = document.getElementById("signupForm");
     if (!form) return;
+
     form.addEventListener("submit", async function(event) {
         event.preventDefault();
         clearMessage("signupMessage");
-        if (!emailVerified) { showMessage("signupMessage", "Please verify your Gmail first.", "error"); return; }
+
+        if (!emailVerified) {
+            showMessage("signupMessage", "Please verify your Gmail first.", "error");
+            return;
+        }
+
         const password = getValue("signupPassword");
         const confirmPassword = getValue("confirmPassword");
+
         if (password.length < 8) return showMessage("signupMessage", "Password must contain at least 8 characters.", "error");
         if (password !== confirmPassword) return showMessage("signupMessage", "Passwords do not match.", "error");
+
         const user = {
             name: getValue("name"), email: getValue("email"), mobile: getValue("mobile"),
             username: getValue("username"), dob: getValue("dob"), gender: getValue("gender"),
             region: getValue("region"), country: getValue("country"), password: password
         };
+
         showLoading();
         try {
             const result = await callBackend("registerUser", { user: user });
@@ -421,14 +1274,18 @@ function setupSignup() {
     });
 }
 
+/* ===== LOGIN ===== */
 function setupLogin() {
     const form = document.getElementById("loginForm");
     if (!form) return;
+
     form.addEventListener("submit", async function(event) {
         event.preventDefault();
         const username = getValue("loginUsername");
         const password = getValue("loginPassword");
+
         if (!username || !password) { alert("Enter username and password."); return; }
+
         showLoading();
         try {
             const result = await callBackend("loginUser", { username: username, password: password });
@@ -447,9 +1304,11 @@ function setupLogin() {
     });
 }
 
+/* ===== FORGOT PASSWORD ===== */
 function setupForgotPassword() {
     const form = document.getElementById("forgotForm");
     if (!form) return;
+
     form.addEventListener("submit", function(event) {
         event.preventDefault();
         const email = getValue("forgotEmail");
@@ -458,22 +1317,31 @@ function setupForgotPassword() {
     });
 }
 
+/* ===== GET INPUT VALUE ===== */
 function getValue(id) {
     const element = document.getElementById(id);
     return element ? element.value.trim() : "";
 }
 
+/* ===== DASHBOARD ===== */
 function openDashboard(user) {
     if (!user) return;
     const name = document.getElementById("dashboardName");
     const username = document.getElementById("dashboardUsername");
     const initial = document.getElementById("profileInitial");
+    const memberId = document.getElementById("dashboardMemberId");
+    const settingsAvatar = document.getElementById("settingsAvatar");
+
     if (name) name.textContent = user.name || "User";
     if (username) username.textContent = "@" + (user.username || "username");
+    if (memberId) memberId.textContent = user.memberId || "UDOY-000";
     if (initial) initial.textContent = (user.name || "U").charAt(0).toUpperCase();
-    showPage("dashboardPage");
+    if (settingsAvatar) settingsAvatar.textContent = (user.name || "U").charAt(0).toUpperCase();
+
+    showPage("homePage");
 }
 
+/* ===== LOGOUT ===== */
 function logout() {
     currentUser = null;
     localStorage.removeItem("udoy_user");
@@ -481,15 +1349,411 @@ function logout() {
     showLogin();
 }
 
+/* =========================================================
+   SETTINGS MENU (top-left avatar dropdown)
+========================================================= */
+function toggleSettingsMenu() {
+    document.getElementById("settingsMenu")?.classList.toggle("hidden");
+}
+function goToProfile() {
+    document.getElementById("settingsMenu")?.classList.add("hidden");
+    renderProfile();
+    showPage("profilePage");
+}
+function goToSettings() {
+    document.getElementById("settingsMenu")?.classList.add("hidden");
+    showPage("settingsPage");
+}
+
+function renderProfile() {
+    const card = document.getElementById("profileCard");
+    if (!card || !currentUser) return;
+    card.innerHTML =
+        '<div class="welcome-card" style="margin-bottom:16px;">' +
+            '<div class="profile-circle">' + (currentUser.name || "U").charAt(0).toUpperCase() + '</div>' +
+            '<div><p class="small-text">Member ID</p><h2>' + (currentUser.memberId || "-") + '</h2></div>' +
+        '</div>' +
+        profileRow("Full name", currentUser.name) +
+        profileRow("Username", "@" + currentUser.username) +
+        profileRow("Gmail", currentUser.email) +
+        profileRow("Mobile", currentUser.mobile) +
+        profileRow("Date of birth", currentUser.dob) +
+        profileRow("Gender", currentUser.gender) +
+        profileRow("Region", currentUser.region) +
+        profileRow("Country", currentUser.country);
+}
+function profileRow(label, value) {
+    return '<div class="input-group"><label>' + label + '</label><input type="text" value="' + (value || "-") + '" readonly></div>';
+}
+
+/* =========================================================
+   POLICY (static placeholder — HR uploads via future feature)
+========================================================= */
+function switchPolicyTab(lang) {
+    document.getElementById("policyTabBn").classList.toggle("active", lang === "bn");
+    document.getElementById("policyTabEn").classList.toggle("active", lang === "en");
+    document.getElementById("policyListBn").classList.toggle("hidden", lang !== "bn");
+    document.getElementById("policyListEn").classList.toggle("hidden", lang !== "en");
+}
+document.addEventListener("DOMContentLoaded", function() {
+    const bn = document.getElementById("policyListBn");
+    const en = document.getElementById("policyListEn");
+    if (bn) bn.innerHTML = '<p class="policy-empty">No Bangla policy documents uploaded yet.</p>';
+    if (en) en.innerHTML = '<p class="policy-empty">No English policy documents uploaded yet.</p>';
+});
+
+/* =========================================================
+   MEMBER > REGISTRATION (external form link)
+========================================================= */
+function openRegistrationForm() {
+    window.open("https://script.google.com/macros/s/AKfycbwwWEXS1GkbHivC_bOFc6zP7Mt3CYRKrES2yMcGGWmDdmo3t1zudWD4Yut1om0D6EGZfg/exec", "_blank");
+}
+
+/* =========================================================
+   MEMBER > PAYMENT
+========================================================= */
+function setupPayment() {
+    const form = document.getElementById("paymentForm");
+    if (!form) return;
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+        if (!currentUser) return;
+        const payment = {
+            username: currentUser.username,
+            memberId: currentUser.memberId,
+            amount: getValue("payAmount"),
+            method: getValue("payMethod"),
+            purpose: getValue("payPurpose"),
+            month: getValue("payMonth")
+        };
+        showLoading();
+        try {
+            const result = await callBackend("submitPayment", { payment: payment });
+            hideLoading();
+            showMessage("paymentMessage", result.message, result.success ? "success" : "error");
+            if (result.success) form.reset();
+        } catch (err) {
+            hideLoading();
+            showMessage("paymentMessage", "Could not submit payment. Check your connection.", "error");
+        }
+    });
+}
+
+/* =========================================================
+   MEMBER > CHECK ID
+========================================================= */
+async function doCheckId() {
+    const query = getValue("checkIdInput");
+    const resultBox = document.getElementById("checkIdResult");
+    if (!query) return showMessage("checkIdMessage", "Enter a Member ID or username.", "error");
+
+    showLoading();
+    try {
+        const result = await callBackend("checkId", { query: query });
+        hideLoading();
+        if (!result.success) {
+            showMessage("checkIdMessage", result.message, "error");
+            resultBox.innerHTML = "";
+            return;
+        }
+        clearMessage("checkIdMessage");
+        const u = result.user;
+        let html = '<div class="list-item"><h4>' + u.memberId + ' — ' + u.name + '</h4>' +
+            '<p>@' + u.username + ' · ' + u.region + ', ' + u.country + '</p>' +
+            '<p class="meta">Status: ' + u.status + '</p></div>';
+
+        if (result.payments.length === 0) {
+            html += '<p class="policy-empty">No payment records yet.</p>';
+        } else {
+            result.payments.forEach(p => {
+                html += '<div class="list-item"><h4>৳' + p.amount + ' — ' + p.purpose + '</h4>' +
+                    '<p>' + p.method + ' · ' + p.month + '</p>' +
+                    '<p class="meta">Status: ' + p.status + '</p></div>';
+            });
+        }
+        resultBox.innerHTML = html;
+    } catch (err) {
+        hideLoading();
+        showMessage("checkIdMessage", "Search failed. Check your connection.", "error");
+    }
+}
+
+/* =========================================================
+   NOTICE BOARD (member read-only view)
+========================================================= */
+async function openNoticeBoard() {
+    showPage("noticeBoardPage");
+    const list = document.getElementById("noticeList");
+    const empty = document.getElementById("noticeListEmpty");
+    empty.textContent = "Loading notices…";
+    list.innerHTML = "";
+    try {
+        const result = await callBackend("getNotices", {});
+        if (result.success && result.notices.length > 0) {
+            empty.textContent = "";
+            result.notices.forEach(n => {
+                list.innerHTML += '<div class="list-item"><h4>' + n.title + '</h4><p>' + n.content + '</p><p class="meta">' + formatDate(n.timestamp) + '</p></div>';
+            });
+        } else {
+            empty.textContent = "No notices yet.";
+        }
+    } catch (err) {
+        empty.textContent = "Could not load notices.";
+    }
+}
+
+function formatDate(ts) {
+    try { return new Date(ts).toLocaleString(); } catch (e) { return ts; }
+}
+
+/* =========================================================
+   MESSAGE BOX
+========================================================= */
+async function openMessageBox() {
+    showPage("messageBoxPage");
+    loadMessages();
+}
+async function loadMessages() {
+    const list = document.getElementById("messageList");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    try {
+        const result = await callBackend("getMessages", {});
+        if (result.success) {
+            list.innerHTML = "";
+            result.messages.forEach(m => {
+                const mine = currentUser && m.username === currentUser.username;
+                list.innerHTML += '<div class="chat-bubble' + (mine ? ' mine' : '') + '">' +
+                    '<div class="who">' + m.name + '</div>' +
+                    '<div class="text">' + escapeHtml(m.text) + '</div></div>';
+            });
+            list.scrollTop = list.scrollHeight;
+        } else {
+            list.innerHTML = '<p class="policy-empty">Could not load messages.</p>';
+        }
+    } catch (err) {
+        list.innerHTML = '<p class="policy-empty">Could not load messages.</p>';
+    }
+}
+async function doSendMessage() {
+    const input = document.getElementById("messageInput");
+    const text = input.value.trim();
+    if (!text || !currentUser) return;
+    input.value = "";
+    try {
+        await callBackend("sendMessage", { username: currentUser.username, name: currentUser.name, text: text });
+        loadMessages();
+    } catch (err) { /* ignore */ }
+}
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/* =========================================================
+   REPORT
+========================================================= */
+function setupReport() {
+    const form = document.getElementById("reportForm");
+    if (!form) return;
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+        if (!currentUser) return;
+        const report = {
+            username: currentUser.username,
+            subject: getValue("reportSubject"),
+            description: getValue("reportDescription")
+        };
+        showLoading();
+        try {
+            const result = await callBackend("submitReport", { report: report });
+            hideLoading();
+            showMessage("reportMessage", result.message, result.success ? "success" : "error");
+            if (result.success) form.reset();
+        } catch (err) {
+            hideLoading();
+            showMessage("reportMessage", "Could not submit report. Check your connection.", "error");
+        }
+    });
+}
+
+/* =========================================================
+   SETTINGS — CHANGE PASSWORD
+========================================================= */
+function setupChangePassword() {
+    const form = document.getElementById("changePasswordForm");
+    if (!form) return;
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+        if (!currentUser) return;
+        const oldPassword = getValue("oldPassword");
+        const newPassword = getValue("newPassword");
+        showLoading();
+        try {
+            const result = await callBackend("changePassword", { username: currentUser.username, oldPassword: oldPassword, newPassword: newPassword });
+            hideLoading();
+            showMessage("settingsMessage", result.message, result.success ? "success" : "error");
+            if (result.success) form.reset();
+        } catch (err) {
+            hideLoading();
+            showMessage("settingsMessage", "Could not update password. Check your connection.", "error");
+        }
+    });
+}
+
+/* =========================================================
+   ADMIN GATE
+========================================================= */
+let adminSession = null; // { dept, username, password }
+
+function openAdminGate() {
+    adminSession = null;
+    clearMessage("adminGateMessage");
+    showPage("adminGatePage");
+}
+
+async function doAdminLogin() {
+    const dept = document.getElementById("adminDept").value;
+    const username = getValue("adminUsername");
+    const password = getValue("adminPassword");
+
+    showLoading();
+    try {
+        const result = await callBackend("adminLogin", { dept: dept, username: username, password: password });
+        hideLoading();
+        if (result.success) {
+            adminSession = { dept: dept, username: username, password: password };
+            if (dept === "HR") { showPage("adminHRPage"); loadHrNotices(); }
+            else if (dept === "FD") { showPage("adminFDPage"); loadFdPayments(); }
+            else { showPage("adminRRPage"); loadRrReportsAndMembers(); }
+        } else {
+            showMessage("adminGateMessage", result.message, "error");
+        }
+    } catch (err) {
+        hideLoading();
+        showMessage("adminGateMessage", "Login failed. Check your connection.", "error");
+    }
+}
+
+/* ===== ADMIN: HR ===== */
+async function loadHrNotices() {
+    const list = document.getElementById("hrNoticeList");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getNotices", {});
+    if (result.success) {
+        list.innerHTML = "";
+        result.notices.forEach(n => {
+            list.innerHTML += '<div class="list-item"><h4>' + n.title + '</h4><p>' + n.content + '</p>' +
+                '<p class="meta">' + formatDate(n.timestamp) + '</p>' +
+                '<div class="row-actions"><button class="btn-delete" onclick="hrDeleteNotice(\'' + n.id + '\')">Delete</button></div></div>';
+        });
+    }
+}
+async function hrPostNotice() {
+    if (!adminSession) return;
+    const title = getValue("hrNoticeTitle");
+    const content = getValue("hrNoticeContent");
+    if (!title || !content) return showMessage("hrMessage", "Fill in both title and content.", "error");
+    showLoading();
+    const result = await callBackend("addNotice", { admin: adminSession, title: title, content: content });
+    hideLoading();
+    showMessage("hrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) {
+        document.getElementById("hrNoticeTitle").value = "";
+        document.getElementById("hrNoticeContent").value = "";
+        loadHrNotices();
+    }
+}
+async function hrDeleteNotice(id) {
+    if (!adminSession) return;
+    showLoading();
+    const result = await callBackend("deleteNotice", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("hrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadHrNotices();
+}
+
+/* ===== ADMIN: Financial ===== */
+async function loadFdPayments() {
+    const list = document.getElementById("fdPaymentList");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getPayments", { admin: adminSession });
+    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
+    list.innerHTML = "";
+    if (result.payments.length === 0) { list.innerHTML = '<p class="policy-empty">No payments yet.</p>'; return; }
+    result.payments.forEach(p => {
+        list.innerHTML += '<div class="list-item"><h4>৳' + p.amount + ' — ' + p.purpose + '</h4>' +
+            '<p>' + p.memberId + ' · ' + p.method + ' · ' + p.month + '</p>' +
+            '<p class="meta">Status: ' + p.status + ' · ' + formatDate(p.timestamp) + '</p>' +
+            '<div class="row-actions">' +
+                '<button class="btn-verify" onclick="fdSetStatus(\'' + p.id + '\',\'Verified\')">Verify</button>' +
+                '<button class="btn-reject" onclick="fdSetStatus(\'' + p.id + '\',\'Rejected\')">Reject</button>' +
+            '</div></div>';
+    });
+}
+async function fdSetStatus(id, status) {
+    showLoading();
+    const result = await callBackend("verifyPayment", { admin: adminSession, id: id, status: status });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadFdPayments();
+}
+
+/* ===== ADMIN: Report & Registration ===== */
+async function loadRrReportsAndMembers() {
+    const reportList = document.getElementById("rrReportList");
+    const memberList = document.getElementById("rrMemberList");
+    reportList.innerHTML = '<p class="policy-empty">Loading…</p>';
+    memberList.innerHTML = '<p class="policy-empty">Loading…</p>';
+
+    const reportResult = await callBackend("getReports", { admin: adminSession });
+    if (reportResult.success) {
+        reportList.innerHTML = "";
+        if (reportResult.reports.length === 0) reportList.innerHTML = '<p class="policy-empty">No reports yet.</p>';
+        reportResult.reports.forEach(r => {
+            reportList.innerHTML += '<div class="list-item"><h4>' + r.subject + '</h4><p>' + r.description + '</p>' +
+                '<p class="meta">By ' + r.username + ' · ' + formatDate(r.timestamp) + '</p>' +
+                '<div class="row-actions"><button class="btn-delete" onclick="rrDeleteReport(\'' + r.id + '\')">Delete</button></div></div>';
+        });
+    } else {
+        showMessage("rrMessage", reportResult.message, "error");
+    }
+
+    const memberResult = await callBackend("getMembers", { admin: adminSession });
+    if (memberResult.success) {
+        memberList.innerHTML = "";
+        memberResult.members.forEach(m => {
+            memberList.innerHTML += '<div class="list-item"><h4>' + m.memberId + ' — ' + m.name + '</h4>' +
+                '<p>@' + m.username + ' · ' + m.mobile + '</p>' +
+                '<p class="meta">' + m.email + ' · ' + m.status + '</p></div>';
+        });
+    }
+}
+async function rrDeleteReport(id) {
+    showLoading();
+    const result = await callBackend("deleteReport", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("rrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadRrReportsAndMembers();
+}
+
+/* ===== START APP ===== */
 document.addEventListener("DOMContentLoaded", function() {
     setupLogin();
     setupSignup();
     setupForgotPassword();
+    setupPayment();
+    setupReport();
+    setupChangePassword();
+
     try {
         const saved = localStorage.getItem("udoy_user");
         if (saved) {
             const user = JSON.parse(saved);
-            if (user && user.username) { currentUser = user; openDashboard(user); }
+            if (user && user.username) {
+                currentUser = user;
+                openDashboard(user);
+            }
         }
     } catch (error) {
         localStorage.removeItem("udoy_user");
@@ -504,5 +1768,6 @@ if ("serviceWorker" in navigator) {
     });
 }
 </script>
+
 </body>
 </html>
