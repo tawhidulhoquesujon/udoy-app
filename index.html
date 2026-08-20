@@ -1140,6 +1140,10 @@ function showPage(pageId) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     const page = document.getElementById(pageId);
     if (page) page.classList.add("active");
+    if (pageId !== "messageBoxPage" && messagePollTimer) {
+        clearInterval(messagePollTimer);
+        messagePollTimer = null;
+    }
 }
 function showLogin() { showPage("loginPage"); }
 function showSignup() { showPage("signupPage"); }
@@ -1393,7 +1397,7 @@ function renderProfile() {
         profileRow("Username", "@" + currentUser.username) +
         profileRow("Gmail", currentUser.email) +
         profileRow("Mobile", currentUser.mobile) +
-        profileRow("Date of birth", currentUser.dob) +
+        profileRow("Date of birth", formatDateOnly(currentUser.dob)) +
         profileRow("Gender", currentUser.gender) +
         profileRow("Region", currentUser.region) +
         profileRow("Country", currentUser.country);
@@ -1524,13 +1528,24 @@ async function openNoticeBoard() {
 function formatDate(ts) {
     try { return new Date(ts).toLocaleString(); } catch (e) { return ts; }
 }
+function formatDateOnly(ts) {
+    try {
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return ts;
+        return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    } catch (e) { return ts; }
+}
 
 /* =========================================================
    MESSAGE BOX
 ========================================================= */
+let messagePollTimer = null;
+
 async function openMessageBox() {
     showPage("messageBoxPage");
     loadMessages();
+    if (messagePollTimer) clearInterval(messagePollTimer);
+    messagePollTimer = setInterval(loadMessages, 4000);
 }
 async function loadMessages() {
     const list = document.getElementById("messageList");
@@ -1724,6 +1739,7 @@ async function loadRrReportsAndMembers() {
     const reportList = document.getElementById("rrReportList");
     const memberList = document.getElementById("rrMemberList");
     const adminList = document.getElementById("rrAdminList");
+    clearMessage("rrMessage");
     reportList.innerHTML = '<p class="policy-empty">Loading…</p>';
     memberList.innerHTML = '<p class="policy-empty">Loading…</p>';
     adminList.innerHTML = '<p class="policy-empty">Loading…</p>';
@@ -1754,6 +1770,9 @@ async function loadRrReportsAndMembers() {
                     '<button class="btn-delete" onclick="rrDeleteMember(\'' + m.username + '\')">Delete</button>' +
                 '</div></div>';
         });
+    } else {
+        memberList.innerHTML = '<p class="policy-empty">Could not load members.</p>';
+        showMessage("rrMessage", memberResult.message, "error");
     }
 
     const adminResult = await callBackend("getAdmins", { admin: adminSession });
@@ -1764,6 +1783,8 @@ async function loadRrReportsAndMembers() {
                 '<p>Username: ' + a.username + '</p>' +
                 '<p class="meta">Password: ' + a.password + '</p></div>';
         });
+    } else {
+        adminList.innerHTML = '<p class="policy-empty">Could not load admin list.</p>';
     }
 }
 
