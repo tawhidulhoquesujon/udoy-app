@@ -353,6 +353,13 @@ select {
     pointer-events: none;
     z-index: 0;
 }
+.home-logo-strip {
+    display: block;
+    height: 56px;
+    margin: 6px auto 16px;
+    position: relative;
+    z-index: 1;
+}
 .dashboard-header .eyebrow {
     font-family: var(--font-mono); font-size: 10.5px;
     letter-spacing: .14em; text-transform: uppercase; color: var(--rust);
@@ -798,6 +805,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
             <button onclick="goToSettings()">🔒 Password & Privacy</button>
         </div>
 
+        <img src="logo.png" alt="UDOY logo" class="home-logo-strip">
+
         <div class="welcome-card">
             <div class="profile-circle" id="profileInitial">U</div>
             <div>
@@ -904,6 +913,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
                 <div class="input-group">
                     <label for="payPurpose">Purpose</label>
                     <input type="text" id="payPurpose" placeholder="e.g. Monthly membership fee" required>
+                </div>
+                <div class="input-group">
+                    <label for="payTransactionId">Transaction ID</label>
+                    <input type="text" id="payTransactionId" placeholder="bKash/Nagad Transaction ID" required>
                 </div>
                 <div class="input-group">
                     <label for="payMonth">Month</label>
@@ -1098,6 +1111,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
             <div class="stitch small"></div>
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Member directory</h3>
             <div id="rrMemberList"></div>
+            <div class="stitch small"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Admin directory</h3>
+            <div id="rrAdminList"></div>
         </div>
     </section>
 
@@ -1418,12 +1434,15 @@ function setupPayment() {
     form.addEventListener("submit", async function(event) {
         event.preventDefault();
         if (!currentUser) return;
+        const transactionId = getValue("payTransactionId");
+        if (!transactionId) return showMessage("paymentMessage", "Transaction ID is required.", "error");
         const payment = {
             username: currentUser.username,
             memberId: currentUser.memberId,
             amount: getValue("payAmount"),
             method: getValue("payMethod"),
             purpose: getValue("payPurpose"),
+            transactionId: transactionId,
             month: getValue("payMonth")
         };
         showLoading();
@@ -1467,7 +1486,7 @@ async function doCheckId() {
         } else {
             result.payments.forEach(p => {
                 html += '<div class="list-item"><h4>৳' + p.amount + ' — ' + p.purpose + '</h4>' +
-                    '<p>' + p.method + ' · ' + p.month + '</p>' +
+                    '<p>' + p.method + ' · ' + p.month + ' · TXN: ' + p.transactionId + '</p>' +
                     '<p class="meta">Status: ' + p.status + '</p></div>';
             });
         }
@@ -1684,6 +1703,7 @@ async function loadFdPayments() {
     result.payments.forEach(p => {
         list.innerHTML += '<div class="list-item"><h4>৳' + p.amount + ' — ' + p.purpose + '</h4>' +
             '<p>' + p.memberId + ' · ' + p.method + ' · ' + p.month + '</p>' +
+            '<p class="meta">TXN: ' + p.transactionId + '</p>' +
             '<p class="meta">Status: ' + p.status + ' · ' + formatDate(p.timestamp) + '</p>' +
             '<div class="row-actions">' +
                 '<button class="btn-verify" onclick="fdSetStatus(\'' + p.id + '\',\'Verified\')">Verify</button>' +
@@ -1703,8 +1723,10 @@ async function fdSetStatus(id, status) {
 async function loadRrReportsAndMembers() {
     const reportList = document.getElementById("rrReportList");
     const memberList = document.getElementById("rrMemberList");
+    const adminList = document.getElementById("rrAdminList");
     reportList.innerHTML = '<p class="policy-empty">Loading…</p>';
     memberList.innerHTML = '<p class="policy-empty">Loading…</p>';
+    adminList.innerHTML = '<p class="policy-empty">Loading…</p>';
 
     const reportResult = await callBackend("getReports", { admin: adminSession });
     if (reportResult.success) {
@@ -1722,13 +1744,56 @@ async function loadRrReportsAndMembers() {
     const memberResult = await callBackend("getMembers", { admin: adminSession });
     if (memberResult.success) {
         memberList.innerHTML = "";
+        if (memberResult.members.length === 0) memberList.innerHTML = '<p class="policy-empty">No members yet.</p>';
         memberResult.members.forEach(m => {
             memberList.innerHTML += '<div class="list-item"><h4>' + m.memberId + ' — ' + m.name + '</h4>' +
                 '<p>@' + m.username + ' · ' + m.mobile + '</p>' +
-                '<p class="meta">' + m.email + ' · ' + m.status + '</p></div>';
+                '<p class="meta">' + m.email + ' · ' + m.status + '</p>' +
+                '<div class="row-actions">' +
+                    '<button class="btn-verify" onclick="rrEditMember(\'' + m.username + '\',\'' + m.memberId + '\')">Edit</button>' +
+                    '<button class="btn-delete" onclick="rrDeleteMember(\'' + m.username + '\')">Delete</button>' +
+                '</div></div>';
+        });
+    }
+
+    const adminResult = await callBackend("getAdmins", { admin: adminSession });
+    if (adminResult.success) {
+        adminList.innerHTML = "";
+        adminResult.admins.forEach(a => {
+            adminList.innerHTML += '<div class="list-item"><h4>' + a.department + '</h4>' +
+                '<p>Username: ' + a.username + '</p>' +
+                '<p class="meta">Password: ' + a.password + '</p></div>';
         });
     }
 }
+
+async function rrEditMember(oldUsername, currentMemberId) {
+    const newMemberId = prompt("Member ID:", currentMemberId);
+    if (newMemberId === null) return;
+    const newUsername = prompt("Username:", oldUsername);
+    if (newUsername === null) return;
+    const newPassword = prompt("New password (leave blank to keep unchanged):", "");
+    if (newPassword === null) return;
+
+    showLoading();
+    const result = await callBackend("updateMember", {
+        admin: adminSession, oldUsername: oldUsername,
+        newMemberId: newMemberId, newUsername: newUsername, newPassword: newPassword
+    });
+    hideLoading();
+    showMessage("rrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadRrReportsAndMembers();
+}
+
+async function rrDeleteMember(username) {
+    if (!confirm("Permanently delete this member's account? This cannot be undone.")) return;
+    showLoading();
+    const result = await callBackend("deleteMember", { admin: adminSession, username: username });
+    hideLoading();
+    showMessage("rrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadRrReportsAndMembers();
+}
+
 async function rrDeleteReport(id) {
     showLoading();
     const result = await callBackend("deleteReport", { admin: adminSession, id: id });
