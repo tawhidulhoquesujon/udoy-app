@@ -634,8 +634,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
             <form id="loginForm">
 
                 <div class="input-group">
-                    <label for="loginUsername">Username</label>
-                    <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username" required>
+                    <label for="loginUsername">Username, Gmail, or Mobile</label>
+                    <input type="text" id="loginUsername" placeholder="Username, Gmail, or mobile number" autocomplete="username" required>
                 </div>
 
                 <div class="input-group">
@@ -1082,6 +1082,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Existing notices</h3>
             <div id="hrNoticeList"></div>
         </div>
+
+        <div class="card" style="margin-top:14px;">
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Change my admin password</h3>
+            <div id="hrPwdMessage" class="message"></div>
+            <div class="input-group">
+                <input type="password" id="hrOldPassword" placeholder="Current password">
+            </div>
+            <div class="input-group">
+                <input type="password" id="hrNewPassword" placeholder="New password">
+            </div>
+            <button class="secondary-btn" onclick="adminChangeOwnPassword('hr','HR')">Update Password</button>
+        </div>
     </section>
 
 
@@ -1094,6 +1106,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
         <div class="card">
             <div id="fdMessage" class="message"></div>
             <div id="fdPaymentList"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Change my admin password</h3>
+            <div id="fdPwdMessage" class="message"></div>
+            <div class="input-group">
+                <input type="password" id="fdOldPassword" placeholder="Current password">
+            </div>
+            <div class="input-group">
+                <input type="password" id="fdNewPassword" placeholder="New password">
+            </div>
+            <button class="secondary-btn" onclick="adminChangeOwnPassword('fd','FD')">Update Password</button>
         </div>
     </section>
 
@@ -1114,6 +1138,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
             <div class="stitch small"></div>
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Admin directory</h3>
             <div id="rrAdminList"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Change my admin password</h3>
+            <div id="rrPwdMessage" class="message"></div>
+            <div class="input-group">
+                <input type="password" id="rrOldPassword" placeholder="Current password">
+            </div>
+            <div class="input-group">
+                <input type="password" id="rrNewPassword" placeholder="New password">
+            </div>
+            <button class="secondary-btn" onclick="adminChangeOwnPassword('rr','RR')">Update Password</button>
         </div>
     </section>
 
@@ -1781,10 +1817,45 @@ async function loadRrReportsAndMembers() {
         adminResult.admins.forEach(a => {
             adminList.innerHTML += '<div class="list-item"><h4>' + a.department + '</h4>' +
                 '<p>Username: ' + a.username + '</p>' +
-                '<p class="meta">Password: ' + a.password + '</p></div>';
+                '<p class="meta">Password: ' + a.password + '</p>' +
+                '<div class="row-actions"><button class="btn-verify" onclick="rrEditAdmin(\'' + a.dept + '\')">Edit</button></div></div>';
         });
     } else {
         adminList.innerHTML = '<p class="policy-empty">Could not load admin list.</p>';
+    }
+}
+
+async function rrEditAdmin(dept) {
+    const newUsername = prompt("New username (leave blank to keep unchanged):", "");
+    if (newUsername === null) return;
+    const newPassword = prompt("New password (leave blank to keep unchanged):", "");
+    if (newPassword === null) return;
+    if (!newUsername.trim() && !newPassword.trim()) return;
+
+    showLoading();
+    const result = await callBackend("updateAdminCreds", { admin: adminSession, dept: dept, newUsername: newUsername, newPassword: newPassword });
+    hideLoading();
+    showMessage("rrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadRrReportsAndMembers();
+}
+
+/* ===== ADMIN: self password change (any department) ===== */
+async function adminChangeOwnPassword(prefix, dept) {
+    if (!adminSession) return;
+    const oldPassword = getValue(prefix + "OldPassword");
+    const newPassword = getValue(prefix + "NewPassword");
+    const msgId = prefix + "PwdMessage";
+
+    if (!oldPassword || !newPassword) return showMessage(msgId, "Fill in both fields.", "error");
+
+    showLoading();
+    const result = await callBackend("changeAdminPassword", { dept: dept, username: adminSession.username, oldPassword: oldPassword, newPassword: newPassword });
+    hideLoading();
+    showMessage(msgId, result.message, result.success ? "success" : "error");
+    if (result.success) {
+        adminSession.password = newPassword; // keep session valid for further actions this visit
+        document.getElementById(prefix + "OldPassword").value = "";
+        document.getElementById(prefix + "NewPassword").value = "";
     }
 }
 
