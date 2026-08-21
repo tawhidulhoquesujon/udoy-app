@@ -928,6 +928,177 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     </section>
 
 
+    <!-- REGISTRATION FORM -->
+    <section id="registrationFormPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('memberMenuPage')" aria-label="Back">‹</button>
+            <div><h2>Registration Form</h2><p>Fill to generate your official PDF</p></div>
+        </div>
+
+        <div class="card">
+            <div id="regFormMessage" class="message"></div>
+
+            <div class="input-group">
+                <label>সদস্যের ছবি (Passport Size)</label>
+                <input type="file" id="regPhoto" accept="image/*">
+                <img id="regPhotoPreview" style="display:none; width:90px; height:110px; object-fit:cover; border-radius:8px; margin-top:10px; border:1px solid var(--line);">
+            </div>
+
+            <form id="registrationForm">
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>নাম (বাংলা)</label>
+                        <input type="text" id="regNameBN" required>
+                    </div>
+                    <div class="input-group">
+                        <label>নাম (ইংরেজি)</label>
+                        <input type="text" id="regNameEN" required>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>বাবার নাম</label>
+                        <input type="text" id="regFatherName" required>
+                    </div>
+                    <div class="input-group">
+                        <label>মাতার নাম</label>
+                        <input type="text" id="regMotherName" required>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>জন্ম তারিখ</label>
+                        <input type="date" id="regDob" required>
+                    </div>
+                    <div class="input-group">
+                        <label>রক্তের গ্রুপ</label>
+                        <select id="regBlood" required>
+                            <option value="">Select</option>
+                            <option>A+</option><option>A-</option>
+                            <option>B+</option><option>B-</option>
+                            <option>AB+</option><option>AB-</option>
+                            <option>O+</option><option>O-</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>লিঙ্গ</label>
+                        <select id="regGender" required>
+                            <option value="">Select</option>
+                            <option>পুরুষ</option><option>মহিলা</option><option>অন্যান্য</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>বৈবাহিক অবস্থা</label>
+                        <select id="regMaritalStatus" required>
+                            <option value="">Select</option>
+                            <option>অবিবাহিত</option><option>বিবাহিত</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>জাতীয়তা</label>
+                        <input type="text" id="regNationality" value="বাংলাদেশী" required>
+                    </div>
+                    <div class="input-group">
+                        <label>ধর্ম</label>
+                        <input type="text" id="regReligion" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>NID/জন্ম নিবন্ধন নাম্বার</label>
+                    <input type="text" id="regNid" required>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>মোবাইল নং</label>
+                        <input type="tel" id="regMobile" required>
+                    </div>
+                    <div class="input-group">
+                        <label>ই-মেইল</label>
+                        <input type="email" id="regEmail" required>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>গ্রাম</label>
+                        <input type="text" id="regVillage" required>
+                    </div>
+                    <div class="input-group">
+                        <label>ওয়ার্ড নং</label>
+                        <input type="text" id="regWard" required>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>ইউনিয়ন</label>
+                        <input type="text" id="regUnion" required>
+                    </div>
+                    <div class="input-group">
+                        <label>উপজেলা</label>
+                        <input type="text" id="regUpazila" required>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>জেলা</label>
+                        <input type="text" id="regDistrict" required>
+                    </div>
+                    <div class="input-group">
+                        <label>পেশা</label>
+                        <input type="text" id="regOccupation" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>শিক্ষাগত যোগ্যতা</label>
+                    <input type="text" id="regEducation" required>
+                </div>
+
+                <div class="input-group">
+                    <label>পূর্বে কোন সংগঠনের সাথে যুক্ত ছিলেন কিনা?</label>
+                    <input type="text" id="regPrevOrg" placeholder="হ্যাঁ অথবা না, থাকলে নাম লিখুন" required>
+                </div>
+
+                <div class="input-group">
+                    <label>বিশেষ দক্ষতা</label>
+                    <input type="text" id="regSpecialSkill" required>
+                </div>
+
+                <div class="input-group">
+                    <label>আপনার লক্ষ্য কী?</label>
+                    <input type="text" id="regGoal" required>
+                </div>
+
+                <div class="input-group">
+                    <label>কেন উদ্যোগের সাথে যুক্ত হতে চান?</label>
+                    <input type="text" id="regWhyJoin" required>
+                </div>
+
+                <div class="input-group">
+                    <label>প্রতি মাসে কত দিন উপস্থিত থাকতে পারবেন?</label>
+                    <input type="text" id="regAttendance" placeholder="উদাঃ ২০ দিন" required>
+                </div>
+
+                <button class="primary-btn" type="submit">সাবমিট ও PDF ডাউনলোড</button>
+
+            </form>
+        </div>
+    </section>
+
+
     <!-- CHECK ID -->
     <section id="checkIdPage" class="page">
         <div class="top-header">
@@ -1459,10 +1630,109 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /* =========================================================
-   MEMBER > REGISTRATION (external form link)
+   MEMBER > REGISTRATION (embedded form → generates PDF)
 ========================================================= */
+let regPhotoBase64 = null;
+let regPhotoMimeType = null;
+
 function openRegistrationForm() {
-    window.open("https://script.google.com/macros/s/AKfycbwwWEXS1GkbHivC_bOFc6zP7Mt3CYRKrES2yMcGGWmDdmo3t1zudWD4Yut1om0D6EGZfg/exec", "_blank");
+    if (!currentUser) return;
+    clearMessage("regFormMessage");
+    const nameEN = document.getElementById("regNameEN");
+    const mobile = document.getElementById("regMobile");
+    const email = document.getElementById("regEmail");
+    if (nameEN && !nameEN.value) nameEN.value = currentUser.name || "";
+    if (mobile && !mobile.value) mobile.value = currentUser.mobile || "";
+    if (email && !email.value) email.value = currentUser.email || "";
+    showPage("registrationFormPage");
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const photoInput = document.getElementById("regPhoto");
+    if (photoInput) {
+        photoInput.addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const result = evt.target.result;
+                regPhotoBase64 = result.split(",")[1];
+                regPhotoMimeType = file.type;
+                const preview = document.getElementById("regPhotoPreview");
+                preview.src = result;
+                preview.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const regForm = document.getElementById("registrationForm");
+    if (regForm) {
+        regForm.addEventListener("submit", async function(event) {
+            event.preventDefault();
+            if (!currentUser) return;
+            clearMessage("regFormMessage");
+
+            if (!regPhotoBase64) {
+                showMessage("regFormMessage", "অনুগ্রহ করে একটি ছবি আপলোড করুন।", "error");
+                return;
+            }
+
+            const payload = {
+                username: currentUser.username,
+                nameBN: getValue("regNameBN"), nameEN: getValue("regNameEN"),
+                fatherName: getValue("regFatherName"), motherName: getValue("regMotherName"),
+                dob: getValue("regDob"), blood: getValue("regBlood"),
+                gender: getValue("regGender"), maritalStatus: getValue("regMaritalStatus"),
+                nationality: getValue("regNationality"), religion: getValue("regReligion"),
+                nid: getValue("regNid"), mobile: getValue("regMobile"), email: getValue("regEmail"),
+                village: getValue("regVillage"), ward: getValue("regWard"), union: getValue("regUnion"),
+                upazila: getValue("regUpazila"), district: getValue("regDistrict"),
+                occupation: getValue("regOccupation"), education: getValue("regEducation"),
+                prevOrg: getValue("regPrevOrg"), specialSkill: getValue("regSpecialSkill"),
+                goal: getValue("regGoal"), whyJoin: getValue("regWhyJoin"), attendance: getValue("regAttendance"),
+                fileData: { base64: regPhotoBase64, mimeType: regPhotoMimeType }
+            };
+
+            showLoading();
+            try {
+                const result = await callBackend("submitRegistration", payload);
+                hideLoading();
+                if (result.success) {
+                    downloadPdfFromBase64(result.pdfBase64, result.pdfFileName);
+                    showMessage(
+                        "regFormMessage",
+                        "নিবন্ধন সম্পন্ন হয়েছে! মেম্বার আইডি: " + result.memberId + ". PDF ডাউনলোড শুরু না হলে link-টি ব্যবহার করুন: " + result.pdfUrl,
+                        "success"
+                    );
+                    regForm.reset();
+                    document.getElementById("regPhotoPreview").style.display = "none";
+                    regPhotoBase64 = null;
+                } else {
+                    showMessage("regFormMessage", result.message || "কিছু একটা সমস্যা হয়েছে।", "error");
+                }
+            } catch (err) {
+                hideLoading();
+                showMessage("regFormMessage", "সার্ভার সমস্যা। ইন্টারনেট চেক করুন।", "error");
+            }
+        });
+    }
+});
+
+function downloadPdfFromBase64(base64, fileName) {
+    const byteChars = atob(base64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 /* =========================================================
@@ -1519,7 +1789,11 @@ async function doCheckId() {
         const u = result.user;
         let html = '<div class="list-item"><h4>' + u.memberId + ' — ' + u.name + '</h4>' +
             '<p>@' + u.username + ' · ' + u.region + ', ' + u.country + '</p>' +
-            '<p class="meta">Status: ' + u.status + '</p></div>';
+            '<p class="meta">Status: ' + u.status + '</p>';
+        if (u.registrationPdfUrl) {
+            html += '<div class="row-actions"><a class="btn-verify" style="text-decoration:none;display:inline-block;" href="' + u.registrationPdfUrl + '" target="_blank">📄 Registration PDF</a></div>';
+        }
+        html += '</div>';
 
         if (result.payments.length === 0) {
             html += '<p class="policy-empty">No payment records yet.</p>';
