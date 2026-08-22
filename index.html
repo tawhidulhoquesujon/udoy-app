@@ -941,6 +941,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
             <div class="input-group">
                 <label>সদস্যের ছবি (Passport Size)</label>
                 <input type="file" id="regPhoto" accept="image/*">
+                <p class="subtitle" style="margin:8px 0 0;">
+                    প্রস্তাবিত সাইজ: ৩×৪ পাসপোর্ট সাইজ ছবি (যেকোনো resolution/সাইজের ছবি দিলেও চলবে — automatically ছোট করে নেওয়া হবে)
+                </p>
                 <img id="regPhotoPreview" style="display:none; width:90px; height:110px; object-fit:cover; border-radius:8px; margin-top:10px; border:1px solid var(--line);">
             </div>
 
@@ -1653,14 +1656,52 @@ document.addEventListener("DOMContentLoaded", function() {
         photoInput.addEventListener("change", function(e) {
             const file = e.target.files[0];
             if (!file) return;
+
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const result = evt.target.result;
-                regPhotoBase64 = result.split(",")[1];
-                regPhotoMimeType = file.type;
-                const preview = document.getElementById("regPhotoPreview");
-                preview.src = result;
-                preview.style.display = "block";
+                const img = new Image();
+                img.onload = function() {
+                    // Try progressively smaller sizes/quality until the encoded
+                    // image is comfortably small enough for reliable embedding.
+                    const attempts = [
+                        { maxDim: 700, quality: 0.82 },
+                        { maxDim: 500, quality: 0.75 },
+                        { maxDim: 380, quality: 0.65 },
+                        { maxDim: 260, quality: 0.55 }
+                    ];
+                    const maxBase64Length = 700000; // ~525KB, safely under Docs embed limits
+
+                    let dataUrl = null;
+                    for (let i = 0; i < attempts.length; i++) {
+                        const a = attempts[i];
+                        let w = img.width, h = img.height;
+                        if (w > a.maxDim || h > a.maxDim) {
+                            if (w >= h) { h = Math.round(h * a.maxDim / w); w = a.maxDim; }
+                            else { w = Math.round(w * a.maxDim / h); h = a.maxDim; }
+                        }
+                        const canvas = document.createElement("canvas");
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const candidate = canvas.toDataURL("image/jpeg", a.quality);
+                        dataUrl = candidate;
+                        if (candidate.length <= maxBase64Length) break;
+                    }
+
+                    regPhotoBase64 = dataUrl.split(",")[1];
+                    regPhotoMimeType = "image/jpeg";
+                    const preview = document.getElementById("regPhotoPreview");
+                    preview.src = dataUrl;
+                    preview.style.display = "block";
+                };
+                img.onerror = function() {
+                    showMessage("regFormMessage", "এই ছবিটি পড়া যাচ্ছে না। অনুগ্রহ করে JPG বা PNG ফরম্যাটের একটি ছবি বেছে নিন।", "error");
+                };
+                img.src = evt.target.result;
+            };
+            reader.onerror = function() {
+                showMessage("regFormMessage", "ছবি লোড করা যায়নি, আবার চেষ্টা করুন।", "error");
             };
             reader.readAsDataURL(file);
         });
