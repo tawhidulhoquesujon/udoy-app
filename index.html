@@ -610,6 +610,21 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .chat-bubble.mine .text { color: var(--paper); }
 .chat-bubble.mine .who { color: var(--gold); }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyC3YiOhP59yaYAgUIAkDIKYplZdbJGmz2c",
+  authDomain: "udoy-8632c.firebaseapp.com",
+  databaseURL: "https://udoy-8632c-default-rtdb.firebaseio.com",
+  projectId: "udoy-8632c",
+  storageBucket: "udoy-8632c.firebasestorage.app",
+  messagingSenderId: "415206992827",
+  appId: "1:415206992827:web:ceeb388f46089298c8329e"
+};
+firebase.initializeApp(firebaseConfig);
+</script>
 </head>
 
 <body>
@@ -656,8 +671,68 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
             <button class="secondary-btn" type="button" onclick="showSignup()">Create new account</button>
 
+            <div class="separator"><span>OR</span></div>
+
+            <button class="secondary-btn" type="button" onclick="signInWithGoogle()" id="googleSignInBtn">🔵 Sign in with Google</button>
+
         </div>
 
+    </section>
+
+
+    <!-- GOOGLE COMPLETE PROFILE -->
+    <section id="completeProfilePage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="cancelGoogleSignup()" aria-label="Back">‹</button>
+            <div><h2>Complete your profile</h2><p>One last step to join UDOY</p></div>
+        </div>
+        <div class="card">
+            <div id="completeProfileMessage" class="message"></div>
+            <form id="completeProfileForm">
+                <div class="input-group">
+                    <label>Full name</label>
+                    <input type="text" id="gpName" required>
+                </div>
+                <div class="input-group">
+                    <label>Gmail</label>
+                    <input type="email" id="gpEmail" readonly>
+                </div>
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="gpUsername" placeholder="Choose a username" required>
+                </div>
+                <div class="input-group">
+                    <label>Mobile number</label>
+                    <input type="tel" id="gpMobile" placeholder="01XXXXXXXXX" required>
+                </div>
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>Date of birth</label>
+                        <input type="date" id="gpDob" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Gender</label>
+                        <select id="gpGender" required>
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="two-column">
+                    <div class="input-group">
+                        <label>Region</label>
+                        <input type="text" id="gpRegion" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Country</label>
+                        <input type="text" id="gpCountry" value="Bangladesh" required>
+                    </div>
+                </div>
+                <button class="primary-btn" type="submit">Complete Registration</button>
+            </form>
+        </div>
     </section>
 
 
@@ -1136,13 +1211,13 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     <section id="messageBoxPage" class="page">
         <div class="top-header">
             <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
-            <div><h2>Message Box</h2><p>Community group chat</p></div>
+            <div><h2>Message Box</h2><p>Community group chat · live</p></div>
         </div>
         <div class="card">
-            <button class="text-btn" style="margin:0 0 12px;" onclick="loadMessages()">↻ Refresh</button>
             <div id="messageList" class="message-list"></div>
-            <div class="verify-row" style="margin-top:14px;">
-                <input type="text" id="messageInput" placeholder="Type a message…">
+            <p id="typingIndicator" class="small-text" style="min-height:16px;margin-top:6px;"></p>
+            <div class="verify-row" style="margin-top:10px;">
+                <input type="text" id="messageInput" placeholder="Type a message…" oninput="notifyTyping()">
                 <button class="verify-btn" onclick="doSendMessage()">Send</button>
             </div>
         </div>
@@ -1350,10 +1425,6 @@ function showPage(pageId) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     const page = document.getElementById(pageId);
     if (page) page.classList.add("active");
-    if (pageId !== "messageBoxPage" && messagePollTimer) {
-        clearInterval(messagePollTimer);
-        messagePollTimer = null;
-    }
 }
 function showLogin() { showPage("loginPage"); }
 function showSignup() { showPage("signupPage"); }
@@ -1530,6 +1601,91 @@ function setupLogin() {
         } catch (err) {
             hideLoading();
             alert("Login failed. Check your connection and try again.");
+        }
+    });
+}
+
+/* =========================================================
+   GOOGLE SIGN-IN
+========================================================= */
+let googleUserPending = null; // holds { name, email } while completing profile
+
+async function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    showLoading();
+    try {
+        const result = await firebase.auth().signInWithPopup(provider);
+        const gUser = result.user;
+        const email = gUser.email;
+        const name = gUser.displayName || "";
+
+        const check = await callBackend("googleCheckUser", { email: email });
+        hideLoading();
+
+        if (!check.success) {
+            alert(check.message || "Sign-in failed.");
+            return;
+        }
+
+        if (check.existing) {
+            currentUser = check.user;
+            localStorage.setItem("udoy_user", JSON.stringify(check.user));
+            openDashboard(check.user);
+        } else {
+            googleUserPending = { name: name, email: email };
+            document.getElementById("gpName").value = name;
+            document.getElementById("gpEmail").value = email;
+            const suggested = email.split("@")[0];
+            document.getElementById("gpUsername").value = suggested;
+            clearMessage("completeProfileMessage");
+            showPage("completeProfilePage");
+        }
+    } catch (err) {
+        hideLoading();
+        alert("Google sign-in failed. Please try again.");
+    }
+}
+
+function cancelGoogleSignup() {
+    googleUserPending = null;
+    firebase.auth().signOut();
+    showLogin();
+}
+
+function setupCompleteProfile() {
+    const form = document.getElementById("completeProfileForm");
+    if (!form) return;
+
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+        if (!googleUserPending) return;
+
+        const payload = {
+            name: getValue("gpName"),
+            email: googleUserPending.email,
+            username: getValue("gpUsername"),
+            mobile: getValue("gpMobile"),
+            dob: getValue("gpDob"),
+            gender: getValue("gpGender"),
+            region: getValue("gpRegion"),
+            country: getValue("gpCountry")
+        };
+
+        showLoading();
+        try {
+            const result = await callBackend("completeGoogleRegistration", payload);
+            hideLoading();
+            if (result.success) {
+                currentUser = result.user;
+                localStorage.setItem("udoy_user", JSON.stringify(result.user));
+                googleUserPending = null;
+                openDashboard(result.user);
+            } else {
+                showMessage("completeProfileMessage", result.message, "error");
+            }
+        } catch (err) {
+            hideLoading();
+            showMessage("completeProfileMessage", "Something went wrong. Check your connection.", "error");
         }
     });
 }
@@ -1888,47 +2044,84 @@ function formatDateOnly(ts) {
 }
 
 /* =========================================================
-   MESSAGE BOX
+   MESSAGE BOX — real-time via Firebase Realtime Database
 ========================================================= */
-let messagePollTimer = null;
+let messagesRef = null;
+let typingRef = null;
+let typingTimeout = null;
+let messagesListenerAttached = false;
 
-async function openMessageBox() {
+function openMessageBox() {
     showPage("messageBoxPage");
-    loadMessages();
-    if (messagePollTimer) clearInterval(messagePollTimer);
-    messagePollTimer = setInterval(loadMessages, 4000);
-}
-async function loadMessages() {
+    if (!currentUser) return;
+
     const list = document.getElementById("messageList");
-    list.innerHTML = '<p class="policy-empty">Loading…</p>';
-    try {
-        const result = await callBackend("getMessages", {});
-        if (result.success) {
+    list.innerHTML = '<p class="policy-empty">Connecting…</p>';
+
+    if (!messagesRef) messagesRef = firebase.database().ref("messages");
+
+    if (!messagesListenerAttached) {
+        messagesListenerAttached = true;
+        messagesRef.orderByChild("timestamp").limitToLast(100).on("value", function(snapshot) {
             list.innerHTML = "";
-            result.messages.forEach(m => {
+            const data = snapshot.val();
+            if (!data) {
+                list.innerHTML = '<p class="policy-empty">No messages yet. Say hello!</p>';
+                return;
+            }
+            const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+            entries.forEach(m => {
                 const mine = currentUser && m.username === currentUser.username;
                 list.innerHTML += '<div class="chat-bubble' + (mine ? ' mine' : '') + '">' +
-                    '<div class="who">' + m.name + '</div>' +
+                    '<div class="who">' + escapeHtml(m.name) + '</div>' +
                     '<div class="text">' + escapeHtml(m.text) + '</div></div>';
             });
             list.scrollTop = list.scrollHeight;
-        } else {
-            list.innerHTML = '<p class="policy-empty">Could not load messages.</p>';
-        }
-    } catch (err) {
-        list.innerHTML = '<p class="policy-empty">Could not load messages.</p>';
+        });
     }
+
+    // Typing indicator listener
+    const typingBase = firebase.database().ref("typing");
+    typingBase.on("value", function(snapshot) {
+        const data = snapshot.val() || {};
+        const indicator = document.getElementById("typingIndicator");
+        const others = Object.keys(data).filter(u => data[u] && u !== (currentUser ? currentUser.username : ""));
+        if (others.length > 0) {
+            indicator.textContent = others.join(", ") + " is typing…";
+        } else {
+            indicator.textContent = "";
+        }
+    });
 }
-async function doSendMessage() {
+
+function doSendMessage() {
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
-    if (!text || !currentUser) return;
+    if (!text || !currentUser || !messagesRef) return;
     input.value = "";
-    try {
-        await callBackend("sendMessage", { username: currentUser.username, name: currentUser.name, text: text });
-        loadMessages();
-    } catch (err) { /* ignore */ }
+    messagesRef.push({
+        username: currentUser.username,
+        name: currentUser.name,
+        text: text,
+        timestamp: Date.now()
+    });
+    setTyping(false);
 }
+
+function notifyTyping() {
+    if (!currentUser) return;
+    setTyping(true);
+    if (typingTimeout) clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => setTyping(false), 2000);
+}
+
+function setTyping(isTyping) {
+    if (!currentUser) return;
+    if (!typingRef) typingRef = firebase.database().ref("typing/" + currentUser.username);
+    typingRef.set(isTyping);
+    if (isTyping) typingRef.onDisconnect().set(false);
+}
+
 function escapeHtml(str) {
     const div = document.createElement("div");
     div.textContent = str;
@@ -2214,6 +2407,7 @@ document.addEventListener("DOMContentLoaded", function() {
     setupLogin();
     setupSignup();
     setupForgotPassword();
+    setupCompleteProfile();
     setupPayment();
     setupReport();
     setupChangePassword();
