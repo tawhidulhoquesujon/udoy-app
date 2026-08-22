@@ -939,7 +939,7 @@ firebase.initializeApp(firebaseConfig);
         </div>
 
         <div class="dashboard-info">
-            <h3>UDOY Community</h3>
+            <h3>UDOY Bangladesh</h3>
             <p>Unity for Development & Opportunity of Youth</p>
         </div>
 
@@ -1167,7 +1167,11 @@ firebase.initializeApp(firebaseConfig);
 
                 <div class="input-group">
                     <label>পূর্বে কোন সংগঠনের সাথে যুক্ত ছিলেন কিনা?</label>
-                    <input type="text" id="regPrevOrg" placeholder="হ্যাঁ অথবা না, থাকলে নাম লিখুন" required>
+                    <select id="regPrevOrg" required>
+                        <option value="">নির্বাচন করুন</option>
+                        <option value="হ্যাঁ">হ্যাঁ</option>
+                        <option value="না">না</option>
+                    </select>
                 </div>
 
                 <div class="input-group">
@@ -1181,7 +1185,7 @@ firebase.initializeApp(firebaseConfig);
                 </div>
 
                 <div class="input-group">
-                    <label>কেন উদ্যোগের সাথে যুক্ত হতে চান?</label>
+                    <label>আপনি কেন উদয় বাংলাদেশের সাথে যুক্ত হতে চান?</label>
                     <input type="text" id="regWhyJoin" required>
                 </div>
 
@@ -1920,6 +1924,25 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!currentUser) return;
             clearMessage("regFormMessage");
 
+            const requiredFieldIds = [
+                "regNameBN","regNameEN","regFatherName","regMotherName","regDob","regBlood",
+                "regGender","regMaritalStatus","regNationality","regReligion","regNid",
+                "regMobile","regEmail","regVillage","regWard","regUnion","regUpazila",
+                "regDistrict","regOccupation","regEducation","regPrevOrg","regSpecialSkill",
+                "regGoal","regWhyJoin","regAttendance"
+            ];
+            let firstEmpty = null;
+            for (const id of requiredFieldIds) {
+                const el = document.getElementById(id);
+                if (el && !el.value.trim()) { firstEmpty = el; break; }
+            }
+            if (firstEmpty) {
+                showMessage("regFormMessage", "অনুগ্রহ করে ফর্মের সবগুলো ঘর পূরণ করুন — একটি ঘর খালি আছে।", "error");
+                firstEmpty.scrollIntoView({ behavior: "smooth", block: "center" });
+                firstEmpty.focus();
+                return;
+            }
+
             if (!regPhotoBase64) {
                 showMessage("regFormMessage", "অনুগ্রহ করে একটি ছবি আপলোড করুন।", "error");
                 return;
@@ -1947,14 +1970,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 hideLoading();
                 if (result.success) {
                     downloadPdfFromBase64(result.pdfBase64, result.pdfFileName);
-                    showMessage(
-                        "regFormMessage",
-                        "নিবন্ধন সম্পন্ন হয়েছে! মেম্বার আইডি: " + result.memberId + ". PDF ডাউনলোড শুরু না হলে link-টি ব্যবহার করুন: " + result.pdfUrl,
-                        "success"
-                    );
+                    const el = document.getElementById("regFormMessage");
+                    el.innerHTML = "ধন্যবাদ! আপনার রেজিস্ট্রেশন ফর্মটি প্রিন্ট করে সাথে আপনার জন্ম নিবন্ধন অথবা NID কার্ডের ফটোকপি জমা দিন। " +
+                        "মেম্বার আইডি: " + result.memberId + '. PDF ডাউনলোড শুরু না হলে <a href="' + result.pdfUrl + '" target="_blank">এখানে ক্লিক করুন</a>।';
+                    el.className = "message show success";
                     regForm.reset();
                     document.getElementById("regPhotoPreview").style.display = "none";
                     regPhotoBase64 = null;
+                } else if (result.alreadySubmitted) {
+                    const el = document.getElementById("regFormMessage");
+                    el.innerHTML = result.message + (result.pdfUrl ? ' <a href="' + result.pdfUrl + '" target="_blank">আগের PDF দেখুন</a>' : "");
+                    el.className = "message show error";
                 } else {
                     showMessage("regFormMessage", result.message || "কিছু একটা সমস্যা হয়েছে।", "error");
                 }
