@@ -911,7 +911,7 @@ firebase.initializeApp(firebaseConfig);
             </div>
         </div>
 
-        <button class="policy-btn" onclick="showPage('policyPage')">📜 UDOY POLICY</button>
+        <button class="policy-btn" onclick="openPolicyPage()">📜 UDOY POLICY</button>
 
         <div class="stitch small"></div>
 
@@ -1354,6 +1354,30 @@ firebase.initializeApp(firebaseConfig);
             <div class="stitch small"></div>
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Existing notices</h3>
             <div id="hrNoticeList"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">UDOY Policy</h3>
+            <div id="hrPolicyMessage" class="message"></div>
+            <div class="input-group">
+                <label>Title</label>
+                <input type="text" id="hrPolicyTitle" placeholder="Policy title">
+            </div>
+            <div class="input-group">
+                <label>Language</label>
+                <select id="hrPolicyLang">
+                    <option value="bn">বাংলা</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>PDF file</label>
+                <input type="file" id="hrPolicyFile" accept="application/pdf">
+            </div>
+            <button class="primary-btn" onclick="hrUploadPolicy()">Upload Policy</button>
+            <div class="stitch small"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Uploaded policies</h3>
+            <div id="hrPolicyList"></div>
         </div>
 
         <div class="card" style="margin-top:14px;">
@@ -1933,20 +1957,56 @@ function profileRow(label, value) {
 }
 
 /* =========================================================
-   POLICY (static placeholder — HR uploads via future feature)
+   UDOY POLICY (member view)
 ========================================================= */
+let allPolicies = [];
+
+async function openPolicyPage() {
+    showPage("policyPage");
+    const bn = document.getElementById("policyListBn");
+    const en = document.getElementById("policyListEn");
+    bn.innerHTML = '<p class="policy-empty">Loading…</p>';
+    en.innerHTML = '<p class="policy-empty">Loading…</p>';
+
+    try {
+        const result = await callBackend("getPolicies", {});
+        if (result.success) {
+            allPolicies = result.policies;
+            renderPolicyList("bn");
+            renderPolicyList("en");
+        } else {
+            bn.innerHTML = '<p class="policy-empty">Could not load policies.</p>';
+            en.innerHTML = '<p class="policy-empty">Could not load policies.</p>';
+        }
+    } catch (err) {
+        bn.innerHTML = '<p class="policy-empty">Could not load policies.</p>';
+        en.innerHTML = '<p class="policy-empty">Could not load policies.</p>';
+    }
+}
+
+function renderPolicyList(lang) {
+    const container = document.getElementById(lang === "bn" ? "policyListBn" : "policyListEn");
+    const items = allPolicies.filter(p => p.language === lang);
+    if (items.length === 0) {
+        container.innerHTML = '<p class="policy-empty">' +
+            (lang === "bn" ? "কোনো বাংলা নীতিমালা আপলোড করা হয়নি।" : "No English policy documents uploaded yet.") +
+            '</p>';
+        return;
+    }
+    container.innerHTML = "";
+    items.forEach(p => {
+        container.innerHTML += '<div class="list-item"><h4>' + p.title + '</h4>' +
+            '<p class="meta">' + formatDate(p.timestamp) + '</p>' +
+            '<div class="row-actions"><a class="btn-verify" style="text-decoration:none;display:inline-block;" href="' + p.url + '" target="_blank">📄 View PDF</a></div></div>';
+    });
+}
+
 function switchPolicyTab(lang) {
     document.getElementById("policyTabBn").classList.toggle("active", lang === "bn");
     document.getElementById("policyTabEn").classList.toggle("active", lang === "en");
     document.getElementById("policyListBn").classList.toggle("hidden", lang !== "bn");
     document.getElementById("policyListEn").classList.toggle("hidden", lang !== "en");
 }
-document.addEventListener("DOMContentLoaded", function() {
-    const bn = document.getElementById("policyListBn");
-    const en = document.getElementById("policyListEn");
-    if (bn) bn.innerHTML = '<p class="policy-empty">No Bangla policy documents uploaded yet.</p>';
-    if (en) en.innerHTML = '<p class="policy-empty">No English policy documents uploaded yet.</p>';
-});
 
 /* =========================================================
    MEMBER > REGISTRATION (embedded form → generates PDF)
@@ -2383,7 +2443,7 @@ async function doAdminLogin() {
         hideLoading();
         if (result.success) {
             adminSession = { dept: dept, username: username, password: password };
-            if (dept === "HR") { showPage("adminHRPage"); loadHrNotices(); }
+            if (dept === "HR") { showPage("adminHRPage"); loadHrNotices(); loadHrPolicies(); }
             else if (dept === "FD") { showPage("adminFDPage"); initFdPanel(); }
             else { showPage("adminRRPage"); loadRrReportsAndMembers(); }
         } else {
@@ -2431,6 +2491,59 @@ async function hrDeleteNotice(id) {
     hideLoading();
     showMessage("hrMessage", result.message, result.success ? "success" : "error");
     if (result.success) loadHrNotices();
+}
+
+/* ===== ADMIN: HR — UDOY Policy ===== */
+async function loadHrPolicies() {
+    const list = document.getElementById("hrPolicyList");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getPolicies", {});
+    if (!result.success) { list.innerHTML = '<p class="policy-empty">Could not load policies.</p>'; return; }
+    if (result.policies.length === 0) { list.innerHTML = '<p class="policy-empty">No policies uploaded yet.</p>'; return; }
+    list.innerHTML = "";
+    result.policies.forEach(p => {
+        list.innerHTML += '<div class="list-item"><h4>' + p.title + ' (' + (p.language === "bn" ? "বাংলা" : "English") + ')</h4>' +
+            '<p class="meta">' + formatDate(p.timestamp) + '</p>' +
+            '<div class="row-actions">' +
+                '<a class="btn-verify" style="text-decoration:none;display:inline-block;" href="' + p.url + '" target="_blank">View</a>' +
+                '<button class="btn-delete" onclick="hrDeletePolicy(\'' + p.id + '\')">Delete</button>' +
+            '</div></div>';
+    });
+}
+
+function hrUploadPolicy() {
+    if (!adminSession) return;
+    const title = getValue("hrPolicyTitle");
+    const language = document.getElementById("hrPolicyLang").value;
+    const fileInput = document.getElementById("hrPolicyFile");
+    const file = fileInput.files[0];
+
+    if (!title) return showMessage("hrPolicyMessage", "Enter a policy title.", "error");
+    if (!file) return showMessage("hrPolicyMessage", "Choose a PDF file.", "error");
+
+    const reader = new FileReader();
+    reader.onload = async function(evt) {
+        const fileData = { base64: evt.target.result.split(",")[1], mimeType: file.type || "application/pdf" };
+        showLoading();
+        const result = await callBackend("addPolicy", { admin: adminSession, policy: { title: title, language: language }, fileData: fileData });
+        hideLoading();
+        showMessage("hrPolicyMessage", result.message, result.success ? "success" : "error");
+        if (result.success) {
+            document.getElementById("hrPolicyTitle").value = "";
+            fileInput.value = "";
+            loadHrPolicies();
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+async function hrDeletePolicy(id) {
+    if (!adminSession) return;
+    showLoading();
+    const result = await callBackend("deletePolicy", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("hrPolicyMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadHrPolicies();
 }
 
 /* ===== ADMIN: Financial ===== */
@@ -2688,11 +2801,13 @@ async function loadRrReportsAndMembers() {
         memberList.innerHTML = "";
         if (memberResult.members.length === 0) memberList.innerHTML = '<p class="policy-empty">No members yet.</p>';
         memberResult.members.forEach(m => {
+            const isActive = m.status !== "Deactivated";
             memberList.innerHTML += '<div class="list-item"><h4>' + m.memberId + ' — ' + m.name + '</h4>' +
                 '<p>@' + m.username + ' · ' + m.mobile + '</p>' +
                 '<p class="meta">' + m.email + ' · ' + m.status + '</p>' +
                 '<div class="row-actions">' +
                     '<button class="btn-verify" onclick="rrEditMember(\'' + m.username + '\',\'' + m.memberId + '\')">Edit</button>' +
+                    '<button class="' + (isActive ? 'btn-reject' : 'btn-verify') + '" onclick="rrToggleStatus(\'' + m.username + '\',\'' + (isActive ? 'Deactivated' : 'Active') + '\')">' + (isActive ? 'Deactivate' : 'Activate') + '</button>' +
                     '<button class="btn-delete" onclick="rrDeleteMember(\'' + m.username + '\')">Delete</button>' +
                 '</div></div>';
         });
@@ -2771,6 +2886,18 @@ async function rrDeleteMember(username) {
     if (!confirm("Permanently delete this member's account? This cannot be undone.")) return;
     showLoading();
     const result = await callBackend("deleteMember", { admin: adminSession, username: username });
+    hideLoading();
+    showMessage("rrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadRrReportsAndMembers();
+}
+
+async function rrToggleStatus(username, newStatus) {
+    const confirmMsg = newStatus === "Deactivated"
+        ? "Deactivate this account? The member will not be able to log in until reactivated."
+        : "Reactivate this account?";
+    if (!confirm(confirmMsg)) return;
+    showLoading();
+    const result = await callBackend("setMemberStatus", { admin: adminSession, username: username, status: newStatus });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
     if (result.success) loadRrReportsAndMembers();
