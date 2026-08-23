@@ -1374,11 +1374,117 @@ firebase.initializeApp(firebaseConfig);
     <section id="adminFDPage" class="page">
         <div class="top-header">
             <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
-            <div><h2>Financial Department</h2><p>Payments & accounts</p></div>
+            <div><h2>Financial Department</h2><p>Financial Management System</p></div>
         </div>
+
         <div class="card">
             <div id="fdMessage" class="message"></div>
-            <div id="fdPaymentList"></div>
+            <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
+                <button class="tab-btn active" id="fdTabOverview" onclick="switchFdTab('overview')">Overview</button>
+                <button class="tab-btn" id="fdTabIncome" onclick="switchFdTab('income')">Income</button>
+                <button class="tab-btn" id="fdTabExpense" onclick="switchFdTab('expense')">Expense</button>
+                <button class="tab-btn" id="fdTabFunds" onclick="switchFdTab('funds')">Funds</button>
+                <button class="tab-btn" id="fdTabPayments" onclick="switchFdTab('payments')">Member Payments</button>
+            </div>
+
+            <!-- OVERVIEW -->
+            <div id="fdPanelOverview">
+                <div class="welcome-card" style="margin:16px 0;">
+                    <div>
+                        <p class="small-text">Total Income</p>
+                        <h2 id="fdTotalIncome">৳0</h2>
+                        <p id="fdIncomeBreakdown" style="color:rgba(251,246,236,.75);font-size:12px;"></p>
+                    </div>
+                </div>
+                <div class="two-column">
+                    <div class="list-item"><h4>Total Expense</h4><p id="fdTotalExpense">৳0</p></div>
+                    <div class="list-item"><h4>Available Balance</h4><p id="fdBalance">৳0</p></div>
+                </div>
+                <div class="stitch small"></div>
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">By account type</h3>
+                <div id="fdByType"></div>
+            </div>
+
+            <!-- INCOME -->
+            <div id="fdPanelIncome" class="hidden">
+                <h3 style="font-family:var(--font-display);margin:16px 0 10px;">Add Income</h3>
+                <div class="input-group"><label>Date</label><input type="date" id="incDate"></div>
+                <div class="input-group"><label>Source / Member</label><input type="text" id="incSource" placeholder="e.g. Donor name"></div>
+                <div class="input-group">
+                    <label>Income Type</label>
+                    <select id="incType">
+                        <option>Membership</option><option>Donation</option><option>Grant</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>Amount (৳)</label><input type="number" id="incAmount"></div>
+                <div class="input-group">
+                    <label>Payment Method</label>
+                    <select id="incMethod"><option>Cash</option><option>Bank</option><option>bKash</option><option>Nagad</option><option>Other</option></select>
+                </div>
+                <div class="input-group"><label>Reference</label><input type="text" id="incReference"></div>
+                <div class="input-group"><label>Received By</label><input type="text" id="incReceivedBy"></div>
+                <div class="input-group">
+                    <label>Fund / Account</label>
+                    <select id="incFund"></select>
+                </div>
+                <div class="input-group">
+                    <label>Receipt (optional)</label>
+                    <input type="file" id="incReceipt" accept="image/*">
+                </div>
+                <button class="primary-btn" onclick="fdAddIncome()">Add Income</button>
+                <div class="stitch small"></div>
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Income Register</h3>
+                <div id="fdIncomeList"></div>
+            </div>
+
+            <!-- EXPENSE -->
+            <div id="fdPanelExpense" class="hidden">
+                <h3 style="font-family:var(--font-display);margin:16px 0 10px;">Add Expense</h3>
+                <div class="input-group"><label>Date</label><input type="date" id="expDate"></div>
+                <div class="input-group"><label>Category</label><input type="text" id="expCategory" placeholder="e.g. Office supplies"></div>
+                <div class="input-group"><label>Description</label><input type="text" id="expDescription"></div>
+                <div class="input-group"><label>Amount (৳)</label><input type="number" id="expAmount"></div>
+                <div class="input-group">
+                    <label>Payment Method</label>
+                    <select id="expMethod"><option>Cash</option><option>Bank</option><option>bKash</option><option>Nagad</option><option>Other</option></select>
+                </div>
+                <div class="input-group"><label>Voucher / Receipt Number</label><input type="text" id="expVoucher"></div>
+                <div class="input-group"><label>Approved By</label><input type="text" id="expApprovedBy"></div>
+                <div class="input-group"><label>Paid By</label><input type="text" id="expPaidBy"></div>
+                <div class="input-group">
+                    <label>Fund / Account</label>
+                    <select id="expFund"></select>
+                </div>
+                <div class="input-group">
+                    <label>Receipt (optional)</label>
+                    <input type="file" id="expReceipt" accept="image/*">
+                </div>
+                <button class="primary-btn" onclick="fdAddExpense()">Add Expense</button>
+                <div class="stitch small"></div>
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Expense Register</h3>
+                <div id="fdExpenseList"></div>
+            </div>
+
+            <!-- FUNDS -->
+            <div id="fdPanelFunds" class="hidden">
+                <h3 style="font-family:var(--font-display);margin:16px 0 10px;">Add Fund / Account</h3>
+                <div class="input-group"><label>Name</label><input type="text" id="fundName" placeholder="e.g. Climate Project"></div>
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="fundType"><option>Cash</option><option>Bank</option><option>MobileBanking</option><option>Project</option></select>
+                </div>
+                <div class="input-group"><label>Source</label><input type="text" id="fundSource"></div>
+                <div class="input-group"><label>Purpose</label><input type="text" id="fundPurpose"></div>
+                <button class="primary-btn" onclick="fdAddFund()">Add Fund</button>
+                <div class="stitch small"></div>
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Funds & Accounts</h3>
+                <div id="fdFundsList"></div>
+            </div>
+
+            <!-- MEMBER PAYMENTS -->
+            <div id="fdPanelPayments" class="hidden">
+                <div id="fdPaymentList"></div>
+            </div>
         </div>
 
         <div class="card" style="margin-top:14px;">
@@ -2278,7 +2384,7 @@ async function doAdminLogin() {
         if (result.success) {
             adminSession = { dept: dept, username: username, password: password };
             if (dept === "HR") { showPage("adminHRPage"); loadHrNotices(); }
-            else if (dept === "FD") { showPage("adminFDPage"); loadFdPayments(); }
+            else if (dept === "FD") { showPage("adminFDPage"); initFdPanel(); }
             else { showPage("adminRRPage"); loadRrReportsAndMembers(); }
         } else {
             showMessage("adminGateMessage", result.message, "error");
@@ -2328,6 +2434,206 @@ async function hrDeleteNotice(id) {
 }
 
 /* ===== ADMIN: Financial ===== */
+/* =========================================================
+   ADMIN: FINANCIAL DEPARTMENT — Financial Management System
+========================================================= */
+
+function switchFdTab(tab) {
+    ["overview","income","expense","funds","payments"].forEach(t => {
+        document.getElementById("fdTab" + capitalize(t)).classList.toggle("active", t === tab);
+        document.getElementById("fdPanel" + capitalize(t)).classList.toggle("hidden", t !== tab);
+    });
+    if (tab === "overview") loadFdOverview();
+    if (tab === "income") { loadFundOptions(); loadFdIncomes(); }
+    if (tab === "expense") { loadFundOptions(); loadFdExpenses(); }
+    if (tab === "funds") loadFdFunds();
+    if (tab === "payments") loadFdPayments();
+}
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function initFdPanel() {
+    clearMessage("fdMessage");
+    switchFdTab("overview");
+}
+
+async function loadFdOverview() {
+    const result = await callBackend("getFinancialSummary", { admin: adminSession });
+    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
+    document.getElementById("fdTotalIncome").textContent = "৳" + result.totalIncome.toLocaleString();
+    document.getElementById("fdIncomeBreakdown").textContent =
+        "Member contributions: ৳" + result.memberContributions.toLocaleString() + " · Other income: ৳" + result.registerIncome.toLocaleString();
+    document.getElementById("fdTotalExpense").textContent = "৳" + result.totalExpense.toLocaleString();
+    document.getElementById("fdBalance").textContent = "৳" + result.balance.toLocaleString();
+
+    const byType = document.getElementById("fdByType");
+    byType.innerHTML = "";
+    if (result.byType.length === 0) byType.innerHTML = '<p class="policy-empty">No funds/accounts added yet.</p>';
+    result.byType.forEach(t => {
+        byType.innerHTML += '<div class="list-item"><h4>' + t.type + '</h4>' +
+            '<p>Received: ৳' + t.received.toLocaleString() + ' · Spent: ৳' + t.spent.toLocaleString() + '</p>' +
+            '<p class="meta">Remaining: ৳' + t.remaining.toLocaleString() + '</p></div>';
+    });
+}
+
+async function loadFundOptions() {
+    const result = await callBackend("getFunds", { admin: adminSession });
+    if (!result.success) return;
+    [document.getElementById("incFund"), document.getElementById("expFund")].forEach(select => {
+        if (!select) return;
+        const current = select.value;
+        select.innerHTML = "";
+        result.funds.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.id;
+            opt.textContent = f.name + " (" + f.type + ")";
+            select.appendChild(opt);
+        });
+        if (current) select.value = current;
+    });
+}
+
+async function loadFdFunds() {
+    const list = document.getElementById("fdFundsList");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getFunds", { admin: adminSession });
+    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
+    list.innerHTML = "";
+    if (result.funds.length === 0) { list.innerHTML = '<p class="policy-empty">No funds yet.</p>'; return; }
+    result.funds.forEach(f => {
+        list.innerHTML += '<div class="list-item"><h4>' + f.name + ' (' + f.type + ')</h4>' +
+            '<p>' + (f.source || "") + (f.purpose ? " · " + f.purpose : "") + '</p>' +
+            '<p class="meta">Received: ৳' + f.received.toLocaleString() + ' · Spent: ৳' + f.spent.toLocaleString() + ' · Remaining: ৳' + f.remaining.toLocaleString() + '</p>' +
+            '<div class="row-actions"><button class="btn-delete" onclick="fdDeleteFund(\'' + f.id + '\')">Delete</button></div></div>';
+    });
+}
+
+async function fdAddFund() {
+    const fund = {
+        name: getValue("fundName"), type: document.getElementById("fundType").value,
+        source: getValue("fundSource"), purpose: getValue("fundPurpose")
+    };
+    if (!fund.name) return showMessage("fdMessage", "Fund name is required.", "error");
+    showLoading();
+    const result = await callBackend("addFund", { admin: adminSession, fund: fund });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) {
+        document.getElementById("fundName").value = "";
+        document.getElementById("fundSource").value = "";
+        document.getElementById("fundPurpose").value = "";
+        loadFdFunds();
+    }
+}
+async function fdDeleteFund(id) {
+    if (!confirm("Delete this fund/account? Existing income/expense entries linked to it will remain but show as unlinked.")) return;
+    showLoading();
+    const result = await callBackend("deleteFund", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadFdFunds();
+}
+
+function readReceiptAsBase64(inputId, callback) {
+    const input = document.getElementById(inputId);
+    const file = input.files[0];
+    if (!file) { callback(null); return; }
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        callback({ base64: evt.target.result.split(",")[1], mimeType: file.type || "image/jpeg" });
+    };
+    reader.readAsDataURL(file);
+}
+
+async function loadFdIncomes() {
+    const list = document.getElementById("fdIncomeList");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getIncomes", { admin: adminSession });
+    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
+    list.innerHTML = "";
+    if (result.incomes.length === 0) { list.innerHTML = '<p class="policy-empty">No income recorded yet.</p>'; return; }
+    result.incomes.forEach(inc => {
+        list.innerHTML += '<div class="list-item"><h4>৳' + Number(inc.amount).toLocaleString() + ' — ' + inc.incomeType + '</h4>' +
+            '<p>' + (inc.source || "") + ' · ' + inc.paymentMethod + ' · ' + inc.date + '</p>' +
+            '<p class="meta">Ref: ' + (inc.reference || "-") + ' · By: ' + (inc.receivedBy || "-") + '</p>' +
+            (inc.receiptUrl ? '<p class="meta"><a href="' + inc.receiptUrl + '" target="_blank">View receipt</a></p>' : '') +
+            '<div class="row-actions"><button class="btn-delete" onclick="fdDeleteIncome(\'' + inc.id + '\')">Delete</button></div></div>';
+    });
+}
+
+async function fdAddIncome() {
+    const income = {
+        date: getValue("incDate"), source: getValue("incSource"),
+        incomeType: document.getElementById("incType").value, amount: getValue("incAmount"),
+        paymentMethod: document.getElementById("incMethod").value, reference: getValue("incReference"),
+        receivedBy: getValue("incReceivedBy"), fundId: document.getElementById("incFund").value
+    };
+    if (!income.amount || !income.fundId) return showMessage("fdMessage", "Amount and fund are required.", "error");
+
+    showLoading();
+    readReceiptAsBase64("incReceipt", async function(fileData) {
+        const result = await callBackend("addIncome", { admin: adminSession, income: income, fileData: fileData });
+        hideLoading();
+        showMessage("fdMessage", result.message, result.success ? "success" : "error");
+        if (result.success) {
+            ["incDate","incSource","incAmount","incReference","incReceivedBy"].forEach(id => document.getElementById(id).value = "");
+            document.getElementById("incReceipt").value = "";
+            loadFdIncomes();
+        }
+    });
+}
+async function fdDeleteIncome(id) {
+    showLoading();
+    const result = await callBackend("deleteIncome", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadFdIncomes();
+}
+
+async function loadFdExpenses() {
+    const list = document.getElementById("fdExpenseList");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getExpenses", { admin: adminSession });
+    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
+    list.innerHTML = "";
+    if (result.expenses.length === 0) { list.innerHTML = '<p class="policy-empty">No expenses recorded yet.</p>'; return; }
+    result.expenses.forEach(exp => {
+        list.innerHTML += '<div class="list-item"><h4>৳' + Number(exp.amount).toLocaleString() + ' — ' + exp.category + '</h4>' +
+            '<p>' + (exp.description || "") + ' · ' + exp.paymentMethod + ' · ' + exp.date + '</p>' +
+            '<p class="meta">Voucher: ' + (exp.voucherNumber || "-") + ' · Approved: ' + (exp.approvedBy || "-") + ' · Paid by: ' + (exp.paidBy || "-") + '</p>' +
+            (exp.receiptUrl ? '<p class="meta"><a href="' + exp.receiptUrl + '" target="_blank">View receipt</a></p>' : '') +
+            '<div class="row-actions"><button class="btn-delete" onclick="fdDeleteExpense(\'' + exp.id + '\')">Delete</button></div></div>';
+    });
+}
+
+async function fdAddExpense() {
+    const expense = {
+        date: getValue("expDate"), category: getValue("expCategory"), description: getValue("expDescription"),
+        amount: getValue("expAmount"), paymentMethod: document.getElementById("expMethod").value,
+        voucherNumber: getValue("expVoucher"), approvedBy: getValue("expApprovedBy"), paidBy: getValue("expPaidBy"),
+        fundId: document.getElementById("expFund").value
+    };
+    if (!expense.amount || !expense.fundId) return showMessage("fdMessage", "Amount and fund are required.", "error");
+
+    showLoading();
+    readReceiptAsBase64("expReceipt", async function(fileData) {
+        const result = await callBackend("addExpense", { admin: adminSession, expense: expense, fileData: fileData });
+        hideLoading();
+        showMessage("fdMessage", result.message, result.success ? "success" : "error");
+        if (result.success) {
+            ["expDate","expCategory","expDescription","expAmount","expVoucher","expApprovedBy","expPaidBy"].forEach(id => document.getElementById(id).value = "");
+            document.getElementById("expReceipt").value = "";
+            loadFdExpenses();
+        }
+    });
+}
+async function fdDeleteExpense(id) {
+    showLoading();
+    const result = await callBackend("deleteExpense", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadFdExpenses();
+}
+
 async function loadFdPayments() {
     const list = document.getElementById("fdPaymentList");
     list.innerHTML = '<p class="policy-empty">Loading…</p>';
