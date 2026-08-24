@@ -1,6 +1,5 @@
-const CACHE_NAME = "udoy-cache-v2";
+const CACHE_NAME = "udoy-cache-v3";
 const FILES_TO_CACHE = [
-  "./index.html",
   "./manifest.json",
   "./logo.png",
   "./icon-192.png",
@@ -25,6 +24,25 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  const isNavigation =
+    event.request.mode === "navigate" ||
+    (event.request.method === "GET" &&
+      event.request.headers.get("accept") &&
+      event.request.headers.get("accept").includes("text/html"));
+
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => response || fetch(event.request))
   );

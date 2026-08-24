@@ -415,7 +415,55 @@ select {
     font-family: var(--font-display);
     font-size: 22px; font-weight: 700;
     flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
 }
+.profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+.profile-circle-large {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: var(--gold); color: var(--green-deep);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 32px; font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+}
+.profile-circle-large img { width: 100%; height: 100%; object-fit: cover; }
+
+.camera-btn {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--gold); border: 2px solid var(--white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; cursor: pointer;
+}
+
+.crop-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.75);
+    z-index: 1000; display: none; flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+}
+.crop-overlay.show { display: flex; }
+.crop-box {
+    background: var(--paper); border-radius: 18px; padding: 20px;
+    width: 100%; max-width: 360px;
+}
+.crop-box h3 { font-family: var(--font-display); color: var(--green-deep); margin-bottom: 14px; text-align: center; }
+.crop-canvas-wrap {
+    width: 260px; height: 260px; margin: 0 auto;
+    border-radius: 50%; overflow: hidden;
+    border: 3px solid var(--gold);
+    touch-action: none;
+    position: relative;
+}
+.crop-canvas-wrap canvas { display: block; }
+.crop-controls { margin-top: 16px; }
+.crop-controls label { font-family: var(--font-mono); font-size: 11px; color: var(--sage); display: block; margin-bottom: 6px; }
+.crop-controls input[type="range"] { width: 100%; }
+.crop-btn-row { display: flex; gap: 10px; margin-top: 16px; }
+.crop-btn-row button { flex: 1; }
 
 .welcome-card h2 { font-family: var(--font-display); margin: 4px 0 2px; font-size: 19px; }
 .welcome-card p:last-child { color: rgba(251,246,236,.7); font-size: 12.5px; }
@@ -500,7 +548,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     background: var(--green); color: var(--paper);
     border: none; font-family: var(--font-display); font-weight: 700; font-size: 16px;
     display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
 }
+.icon-circle-btn img { width: 100%; height: 100%; object-fit: cover; }
 
 .settings-menu {
     position: absolute;
@@ -1563,6 +1613,26 @@ firebase.initializeApp(firebaseConfig);
     <p>PLEASE WAIT</p>
 </div>
 
+<input type="file" id="profilePhotoInput" accept="image/*" style="display:none;">
+
+<div id="cropOverlay" class="crop-overlay">
+    <div class="crop-box">
+        <h3>Adjust your photo</h3>
+        <div class="crop-canvas-wrap" id="cropCanvasWrap">
+            <canvas id="cropCanvas" width="260" height="260"></canvas>
+        </div>
+        <div class="crop-controls">
+            <label>ZOOM</label>
+            <input type="range" id="cropZoom" min="100" max="300" value="100">
+        </div>
+        <div id="cropMessage" class="message"></div>
+        <div class="crop-btn-row">
+            <button class="secondary-btn" onclick="closeCropModal()">Cancel</button>
+            <button class="primary-btn" onclick="saveCroppedPhoto()">Save Photo</button>
+        </div>
+    </div>
+</div>
+
 <script>
 /* =========================================================
    UDOY backend connection
@@ -1868,18 +1938,24 @@ function openDashboard(user) {
     if (!user) return;
     const name = document.getElementById("dashboardName");
     const username = document.getElementById("dashboardUsername");
-    const initial = document.getElementById("profileInitial");
     const memberId = document.getElementById("dashboardMemberId");
-    const settingsAvatar = document.getElementById("settingsAvatar");
 
     if (name) name.textContent = user.name || "User";
     if (username) username.textContent = "@" + (user.username || "username");
     if (memberId) memberId.textContent = user.memberId || "UDOY-000";
-    if (initial) initial.textContent = (user.name || "U").charAt(0).toUpperCase();
-    if (settingsAvatar) settingsAvatar.textContent = (user.name || "U").charAt(0).toUpperCase();
+    updateAvatarElements(user);
 
     showPage("homePage");
     refreshCurrentUser(); // quietly pull the latest data in case an admin changed something
+}
+
+function updateAvatarElements(user) {
+    const initial = document.getElementById("profileInitial");
+    const settingsAvatar = document.getElementById("settingsAvatar");
+    const letter = (user.name || "U").charAt(0).toUpperCase();
+    const inner = user.profilePhotoUrl ? '<img src="' + user.profilePhotoUrl + '" alt="">' : letter;
+    if (initial) initial.innerHTML = inner;
+    if (settingsAvatar) settingsAvatar.innerHTML = inner;
 }
 
 /* Fetches the member's latest data from the server and updates the cached
@@ -1895,13 +1971,10 @@ async function refreshCurrentUser() {
             const name = document.getElementById("dashboardName");
             const username = document.getElementById("dashboardUsername");
             const memberId = document.getElementById("dashboardMemberId");
-            const initial = document.getElementById("profileInitial");
-            const settingsAvatar = document.getElementById("settingsAvatar");
             if (name) name.textContent = currentUser.name || "User";
             if (username) username.textContent = "@" + (currentUser.username || "username");
             if (memberId) memberId.textContent = currentUser.memberId || "UDOY-000";
-            if (initial) initial.textContent = (currentUser.name || "U").charAt(0).toUpperCase();
-            if (settingsAvatar) settingsAvatar.textContent = (currentUser.name || "U").charAt(0).toUpperCase();
+            updateAvatarElements(currentUser);
         } else if (result.message === "This account has been deactivated." || result.message === "User not found.") {
             logout();
         }
@@ -1938,9 +2011,14 @@ function goToSettings() {
 function renderProfile() {
     const card = document.getElementById("profileCard");
     if (!card || !currentUser) return;
+    const avatarInner = currentUser.profilePhotoUrl
+        ? '<img src="' + currentUser.profilePhotoUrl + '" alt="Profile photo">'
+        : (currentUser.name || "U").charAt(0).toUpperCase();
     card.innerHTML =
         '<div class="welcome-card" style="margin-bottom:16px;">' +
-            '<div class="profile-circle">' + (currentUser.name || "U").charAt(0).toUpperCase() + '</div>' +
+            '<div class="profile-circle-large" id="profilePhotoCircle">' + avatarInner +
+                '<button class="camera-btn" onclick="document.getElementById(\'profilePhotoInput\').click()" aria-label="Change photo">📷</button>' +
+            '</div>' +
             '<div><p class="small-text">Member ID</p><h2>' + (currentUser.memberId || "-") + '</h2></div>' +
         '</div>' +
         profileRow("Full name", currentUser.name) +
@@ -1954,6 +2032,137 @@ function renderProfile() {
 }
 function profileRow(label, value) {
     return '<div class="input-group"><label>' + label + '</label><input type="text" value="' + (value || "-") + '" readonly></div>';
+}
+
+/* =========================================================
+   PROFILE PHOTO — upload & crop tool
+========================================================= */
+let cropImg = null;
+let cropScale = 1;
+let cropOffsetX = 0;
+let cropOffsetY = 0;
+let cropDragging = false;
+let cropDragStartX = 0;
+let cropDragStartY = 0;
+let cropStartOffsetX = 0;
+let cropStartOffsetY = 0;
+const CROP_SIZE = 260;
+
+document.addEventListener("DOMContentLoaded", function() {
+    const input = document.getElementById("profilePhotoInput");
+    if (input) {
+        input.addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const img = new Image();
+                img.onload = function() {
+                    cropImg = img;
+                    const minScale = Math.max(CROP_SIZE / img.width, CROP_SIZE / img.height);
+                    cropScale = minScale;
+                    cropOffsetX = 0;
+                    cropOffsetY = 0;
+                    document.getElementById("cropZoom").value = 100;
+                    document.getElementById("cropZoom").dataset.minScale = minScale;
+                    clearMessage("cropMessage");
+                    drawCropCanvas();
+                    document.getElementById("cropOverlay").classList.add("show");
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const zoom = document.getElementById("cropZoom");
+    if (zoom) {
+        zoom.addEventListener("input", function() {
+            const minScale = parseFloat(zoom.dataset.minScale || "1");
+            cropScale = minScale * (zoom.value / 100);
+            drawCropCanvas();
+        });
+    }
+
+    const wrap = document.getElementById("cropCanvasWrap");
+    if (wrap) {
+        wrap.addEventListener("pointerdown", function(e) {
+            cropDragging = true;
+            cropDragStartX = e.clientX;
+            cropDragStartY = e.clientY;
+            cropStartOffsetX = cropOffsetX;
+            cropStartOffsetY = cropOffsetY;
+            wrap.setPointerCapture(e.pointerId);
+        });
+        wrap.addEventListener("pointermove", function(e) {
+            if (!cropDragging) return;
+            cropOffsetX = cropStartOffsetX + (e.clientX - cropDragStartX);
+            cropOffsetY = cropStartOffsetY + (e.clientY - cropDragStartY);
+            drawCropCanvas();
+        });
+        wrap.addEventListener("pointerup", function() { cropDragging = false; });
+        wrap.addEventListener("pointercancel", function() { cropDragging = false; });
+    }
+});
+
+function drawCropCanvas() {
+    if (!cropImg) return;
+    const canvas = document.getElementById("cropCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, CROP_SIZE, CROP_SIZE);
+
+    const w = cropImg.width * cropScale;
+    const h = cropImg.height * cropScale;
+
+    // Clamp offsets so the image always fully covers the circular viewport
+    const maxOffsetX = Math.max(0, (w - CROP_SIZE) / 2);
+    const maxOffsetY = Math.max(0, (h - CROP_SIZE) / 2);
+    cropOffsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, cropOffsetX));
+    cropOffsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, cropOffsetY));
+
+    const x = (CROP_SIZE - w) / 2 + cropOffsetX;
+    const y = (CROP_SIZE - h) / 2 + cropOffsetY;
+    ctx.drawImage(cropImg, x, y, w, h);
+}
+
+function closeCropModal() {
+    document.getElementById("cropOverlay").classList.remove("show");
+    document.getElementById("profilePhotoInput").value = "";
+    cropImg = null;
+}
+
+async function saveCroppedPhoto() {
+    if (!cropImg || !currentUser) return;
+    const sourceCanvas = document.getElementById("cropCanvas");
+    // Export a fixed-size square JPEG from the visible circular crop area
+    const outputCanvas = document.createElement("canvas");
+    outputCanvas.width = 400;
+    outputCanvas.height = 400;
+    const ctx = outputCanvas.getContext("2d");
+    ctx.drawImage(sourceCanvas, 0, 0, CROP_SIZE, CROP_SIZE, 0, 0, 400, 400);
+    const dataUrl = outputCanvas.toDataURL("image/jpeg", 0.85);
+    const base64 = dataUrl.split(",")[1];
+
+    showLoading();
+    try {
+        const result = await callBackend("updateProfilePhoto", {
+            username: currentUser.username,
+            fileData: { base64: base64, mimeType: "image/jpeg" }
+        });
+        hideLoading();
+        if (result.success) {
+            currentUser.profilePhotoUrl = result.url;
+            localStorage.setItem("udoy_user", JSON.stringify(currentUser));
+            updateAvatarElements(currentUser);
+            closeCropModal();
+            renderProfile();
+        } else {
+            showMessage("cropMessage", result.message || "Could not update photo.", "error");
+        }
+    } catch (err) {
+        hideLoading();
+        showMessage("cropMessage", "Upload failed. Check your connection.", "error");
+    }
 }
 
 /* =========================================================
@@ -2940,6 +3149,15 @@ if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js").catch(function(err) {
             console.log("Service worker registration failed:", err);
         });
+    });
+
+    // When a new version of the app takes over, reload once automatically
+    // so the installed PWA always shows the latest content.
+    let swRefreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function() {
+        if (swRefreshing) return;
+        swRefreshing = true;
+        window.location.reload();
     });
 }
 </script>
