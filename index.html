@@ -1459,6 +1459,7 @@ firebase.initializeApp(firebaseConfig);
                 <button class="tab-btn" id="fdTabExpense" onclick="switchFdTab('expense')">Expense</button>
                 <button class="tab-btn" id="fdTabFunds" onclick="switchFdTab('funds')">Funds</button>
                 <button class="tab-btn" id="fdTabPayments" onclick="switchFdTab('payments')">Member Payments</button>
+                <button class="tab-btn" id="fdTabRegister" onclick="switchFdTab('register')">Register</button>
             </div>
 
             <!-- OVERVIEW -->
@@ -1558,6 +1559,119 @@ firebase.initializeApp(firebaseConfig);
             <!-- MEMBER PAYMENTS -->
             <div id="fdPanelPayments" class="hidden">
                 <div id="fdPaymentList"></div>
+            </div>
+
+            <!-- REGISTER (Asset / Stock / Advance) -->
+            <div id="fdPanelRegister" class="hidden">
+
+                <!-- Register menu -->
+                <div id="registerMenu">
+                    <div class="sector-grid" style="margin-top:16px;">
+                        <button class="sector-card" onclick="openRegisterSub('asset')">
+                            <div class="icon">🏢</div><h3>Asset Register</h3><p>Track organizational assets</p>
+                        </button>
+                        <button class="sector-card" onclick="openRegisterSub('stock')">
+                            <div class="icon">📦</div><h3>Stock Register</h3><p>Inventory & stock levels</p>
+                        </button>
+                        <button class="sector-card" onclick="openRegisterSub('advance')">
+                            <div class="icon">💵</div><h3>Advance Register</h3><p>Advance payments & settlement</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ASSET SUB-PAGE -->
+                <div id="registerAsset" class="hidden">
+                    <button class="text-btn" style="margin:16px 0 0;" onclick="closeRegisterSub()">‹ Back to Register</button>
+                    <h3 style="font-family:var(--font-display);margin:14px 0 10px;">Asset Register</h3>
+                    <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
+                        <button class="tab-btn active" onclick="assetSubAction('list')">Asset List</button>
+                        <button class="tab-btn" onclick="assetSubAction('add')">Add New Asset</button>
+                        <button class="tab-btn" onclick="assetSubAction('soon')">Transfer</button>
+                        <button class="tab-btn" onclick="assetSubAction('soon')">Maintenance</button>
+                        <button class="tab-btn" onclick="assetSubAction('soon')">Disposal</button>
+                        <button class="tab-btn" onclick="assetSubAction('soon')">Verification</button>
+                        <button class="tab-btn" onclick="assetSubAction('soon')">History</button>
+                        <button class="tab-btn" onclick="assetSubAction('soon')">Report</button>
+                    </div>
+
+                    <div id="assetAddForm" class="hidden" style="margin-top:14px;">
+                        <div class="input-group"><label>Asset Name</label><input type="text" id="assetName"></div>
+                        <div class="input-group"><label>Category</label><input type="text" id="assetCategory"></div>
+                        <div class="input-group"><label>Purchase Date</label><input type="date" id="assetPurchaseDate"></div>
+                        <div class="input-group"><label>Value (৳)</label><input type="number" id="assetValue"></div>
+                        <div class="input-group"><label>Location</label><input type="text" id="assetLocation"></div>
+                        <div class="input-group">
+                            <label>Status</label>
+                            <select id="assetStatus"><option>Active</option><option>Under Repair</option><option>Disposed</option></select>
+                        </div>
+                        <button class="primary-btn" onclick="submitAsset()">Save Asset</button>
+                    </div>
+
+                    <div id="assetListView" style="margin-top:14px;"></div>
+                </div>
+
+                <!-- STOCK SUB-PAGE -->
+                <div id="registerStock" class="hidden">
+                    <button class="text-btn" style="margin:16px 0 0;" onclick="closeRegisterSub()">‹ Back to Register</button>
+                    <h3 style="font-family:var(--font-display);margin:14px 0 10px;">Stock Register</h3>
+                    <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
+                        <button class="tab-btn active" onclick="stockSubAction('list')">Item List</button>
+                        <button class="tab-btn" onclick="stockSubAction('add')">Add Item</button>
+                        <button class="tab-btn" onclick="stockSubAction('in')">Stock In</button>
+                        <button class="tab-btn" onclick="stockSubAction('out')">Stock Out</button>
+                        <button class="tab-btn" onclick="stockSubAction('soon')">Adjustment</button>
+                        <button class="tab-btn" onclick="stockSubAction('soon')">Transfer</button>
+                        <button class="tab-btn" onclick="stockSubAction('soon')">History</button>
+                        <button class="tab-btn" onclick="stockSubAction('soon')">Report</button>
+                    </div>
+
+                    <div id="stockAddForm" class="hidden" style="margin-top:14px;">
+                        <div class="input-group"><label>Item Name</label><input type="text" id="stockItemName"></div>
+                        <div class="input-group"><label>Category</label><input type="text" id="stockCategory"></div>
+                        <div class="input-group"><label>Unit</label><input type="text" id="stockUnit" placeholder="e.g. pcs, kg, box"></div>
+                        <div class="input-group"><label>Opening Quantity</label><input type="number" id="stockOpeningQty"></div>
+                        <div class="input-group"><label>Low Stock Alert Level</label><input type="number" id="stockLowThreshold"></div>
+                        <button class="primary-btn" onclick="submitStockItem()">Save Item</button>
+                    </div>
+
+                    <div id="stockInOutForm" class="hidden" style="margin-top:14px;">
+                        <div class="input-group">
+                            <label>Item</label>
+                            <select id="stockTxnItem"></select>
+                        </div>
+                        <div class="input-group"><label>Quantity</label><input type="number" id="stockTxnQty"></div>
+                        <div class="input-group"><label>Note</label><input type="text" id="stockTxnNote"></div>
+                        <button class="primary-btn" onclick="submitStockTxn()" id="stockTxnBtn">Submit</button>
+                    </div>
+
+                    <div id="stockListView" style="margin-top:14px;"></div>
+                </div>
+
+                <!-- ADVANCE SUB-PAGE -->
+                <div id="registerAdvance" class="hidden">
+                    <button class="text-btn" style="margin:16px 0 0;" onclick="closeRegisterSub()">‹ Back to Register</button>
+                    <h3 style="font-family:var(--font-display);margin:14px 0 10px;">Advance Register</h3>
+                    <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
+                        <button class="tab-btn active" onclick="advanceSubAction('list')">Advance List</button>
+                        <button class="tab-btn" onclick="advanceSubAction('add')">New Advance</button>
+                        <button class="tab-btn" onclick="advanceSubAction('soon')">Payment</button>
+                        <button class="tab-btn" onclick="advanceSubAction('soon')">Adjustment</button>
+                        <button class="tab-btn" onclick="advanceSubAction('soon')">Return</button>
+                        <button class="tab-btn" onclick="advanceSubAction('soon')">History</button>
+                        <button class="tab-btn" onclick="advanceSubAction('soon')">Report</button>
+                    </div>
+
+                    <div id="advanceAddForm" class="hidden" style="margin-top:14px;">
+                        <div class="input-group"><label>Person Name</label><input type="text" id="advancePersonName"></div>
+                        <div class="input-group"><label>Purpose</label><input type="text" id="advancePurpose"></div>
+                        <div class="input-group"><label>Amount (৳)</label><input type="number" id="advanceAmount"></div>
+                        <div class="input-group"><label>Date</label><input type="date" id="advanceDate"></div>
+                        <button class="primary-btn" onclick="submitAdvance()">Save Advance</button>
+                    </div>
+
+                    <div id="advanceListView" style="margin-top:14px;"></div>
+                </div>
+
             </div>
         </div>
 
@@ -2761,7 +2875,7 @@ async function hrDeletePolicy(id) {
 ========================================================= */
 
 function switchFdTab(tab) {
-    ["overview","income","expense","funds","payments"].forEach(t => {
+    ["overview","income","expense","funds","payments","register"].forEach(t => {
         document.getElementById("fdTab" + capitalize(t)).classList.toggle("active", t === tab);
         document.getElementById("fdPanel" + capitalize(t)).classList.toggle("hidden", t !== tab);
     });
@@ -2770,6 +2884,7 @@ function switchFdTab(tab) {
     if (tab === "expense") { loadFundOptions(); loadFdExpenses(); }
     if (tab === "funds") loadFdFunds();
     if (tab === "payments") loadFdPayments();
+    if (tab === "register") closeRegisterSub();
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -2980,6 +3095,202 @@ async function fdSetStatus(id, status) {
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
     if (result.success) loadFdPayments();
+}
+
+/* =========================================================
+   FD: REGISTER — Asset / Stock / Advance
+========================================================= */
+function openRegisterSub(type) {
+    document.getElementById("registerMenu").classList.add("hidden");
+    ["Asset","Stock","Advance"].forEach(t => document.getElementById("register" + t).classList.add("hidden"));
+    document.getElementById("register" + capitalize(type)).classList.remove("hidden");
+    if (type === "asset") { assetSubAction("list"); }
+    if (type === "stock") { stockSubAction("list"); }
+    if (type === "advance") { advanceSubAction("list"); }
+}
+function closeRegisterSub() {
+    document.getElementById("registerMenu").classList.remove("hidden");
+    ["Asset","Stock","Advance"].forEach(t => document.getElementById("register" + t).classList.add("hidden"));
+}
+function comingSoon() { alert("This feature is coming soon."); }
+
+/* ----- Asset Register ----- */
+function assetSubAction(action) {
+    document.getElementById("assetAddForm").classList.toggle("hidden", action !== "add");
+    document.getElementById("assetListView").classList.toggle("hidden", action === "add");
+    if (action === "list") loadAssetList();
+    if (action === "soon") comingSoon();
+}
+async function loadAssetList() {
+    const view = document.getElementById("assetListView");
+    view.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getAssets", { admin: adminSession });
+    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
+    if (result.assets.length === 0) { view.innerHTML = '<p class="policy-empty">No assets added yet.</p>'; return; }
+    view.innerHTML = "";
+    result.assets.forEach(a => {
+        view.innerHTML += '<div class="list-item"><h4>' + a.name + ' (' + (a.category || "-") + ')</h4>' +
+            '<p>Value: ৳' + Number(a.value || 0).toLocaleString() + ' · Location: ' + (a.location || "-") + '</p>' +
+            '<p class="meta">Status: ' + a.status + ' · Purchased: ' + (a.purchaseDate || "-") + '</p>' +
+            '<div class="row-actions"><button class="btn-delete" onclick="deleteAssetEntry(\'' + a.id + '\')">Delete</button></div></div>';
+    });
+}
+async function submitAsset() {
+    const asset = {
+        name: getValue("assetName"), category: getValue("assetCategory"),
+        purchaseDate: getValue("assetPurchaseDate"), value: getValue("assetValue"),
+        location: getValue("assetLocation"), status: document.getElementById("assetStatus").value
+    };
+    if (!asset.name) return showMessage("fdMessage", "Asset name is required.", "error");
+    showLoading();
+    const result = await callBackend("addAsset", { admin: adminSession, asset: asset });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) {
+        ["assetName","assetCategory","assetPurchaseDate","assetValue","assetLocation"].forEach(id => document.getElementById(id).value = "");
+        assetSubAction("list");
+    }
+}
+async function deleteAssetEntry(id) {
+    showLoading();
+    const result = await callBackend("deleteAsset", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadAssetList();
+}
+
+/* ----- Stock Register ----- */
+function stockSubAction(action) {
+    document.getElementById("stockAddForm").classList.toggle("hidden", action !== "add");
+    document.getElementById("stockInOutForm").classList.toggle("hidden", action !== "in" && action !== "out");
+    document.getElementById("stockListView").classList.toggle("hidden", action === "add" || action === "in" || action === "out");
+    if (action === "in" || action === "out") {
+        document.getElementById("stockTxnBtn").textContent = action === "in" ? "Record Stock In" : "Record Stock Out";
+        document.getElementById("stockTxnBtn").dataset.type = action;
+        loadStockItemOptions();
+    }
+    if (action === "list") loadStockList();
+    if (action === "soon") comingSoon();
+}
+async function loadStockItemOptions() {
+    const select = document.getElementById("stockTxnItem");
+    const result = await callBackend("getStockItems", { admin: adminSession });
+    if (!result.success) return;
+    select.innerHTML = "";
+    result.items.forEach(it => {
+        const opt = document.createElement("option");
+        opt.value = it.id;
+        opt.textContent = it.name + " (current: " + it.currentQty + " " + (it.unit || "") + ")";
+        select.appendChild(opt);
+    });
+}
+async function loadStockList() {
+    const view = document.getElementById("stockListView");
+    view.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getStockItems", { admin: adminSession });
+    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
+    if (result.items.length === 0) { view.innerHTML = '<p class="policy-empty">No stock items yet.</p>'; return; }
+    view.innerHTML = "";
+    result.items.forEach(it => {
+        const low = it.lowStockThreshold && Number(it.currentQty) <= Number(it.lowStockThreshold);
+        view.innerHTML += '<div class="list-item"><h4>' + it.name + (low ? ' ⚠️ Low Stock' : '') + '</h4>' +
+            '<p>' + (it.category || "-") + ' · Current: ' + it.currentQty + ' ' + (it.unit || "") + '</p>' +
+            '<div class="row-actions"><button class="btn-delete" onclick="deleteStockItemEntry(\'' + it.id + '\')">Delete</button></div></div>';
+    });
+}
+async function submitStockItem() {
+    const item = {
+        name: getValue("stockItemName"), category: getValue("stockCategory"), unit: getValue("stockUnit"),
+        openingQty: getValue("stockOpeningQty"), lowStockThreshold: getValue("stockLowThreshold")
+    };
+    if (!item.name) return showMessage("fdMessage", "Item name is required.", "error");
+    showLoading();
+    const result = await callBackend("addStockItem", { admin: adminSession, item: item });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) {
+        ["stockItemName","stockCategory","stockUnit","stockOpeningQty","stockLowThreshold"].forEach(id => document.getElementById(id).value = "");
+        stockSubAction("list");
+    }
+}
+async function submitStockTxn() {
+    const type = document.getElementById("stockTxnBtn").dataset.type;
+    const itemId = document.getElementById("stockTxnItem").value;
+    const qty = getValue("stockTxnQty");
+    const note = getValue("stockTxnNote");
+    if (!itemId || !qty) return showMessage("fdMessage", "Select an item and enter quantity.", "error");
+    showLoading();
+    const action = type === "in" ? "stockIn" : "stockOut";
+    const result = await callBackend(action, { admin: adminSession, itemId: itemId, quantity: qty, note: note });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) {
+        document.getElementById("stockTxnQty").value = "";
+        document.getElementById("stockTxnNote").value = "";
+        stockSubAction("list");
+    }
+}
+async function deleteStockItemEntry(id) {
+    showLoading();
+    const result = await callBackend("deleteStockItem", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadStockList();
+}
+
+/* ----- Advance Register ----- */
+function advanceSubAction(action) {
+    document.getElementById("advanceAddForm").classList.toggle("hidden", action !== "add");
+    document.getElementById("advanceListView").classList.toggle("hidden", action === "add");
+    if (action === "list") loadAdvanceList();
+    if (action === "soon") comingSoon();
+}
+async function loadAdvanceList() {
+    const view = document.getElementById("advanceListView");
+    view.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getAdvances", { admin: adminSession });
+    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
+    if (result.advances.length === 0) { view.innerHTML = '<p class="policy-empty">No advances recorded yet.</p>'; return; }
+    view.innerHTML = "";
+    result.advances.forEach(a => {
+        view.innerHTML += '<div class="list-item"><h4>' + a.personName + ' — ৳' + Number(a.amount).toLocaleString() + '</h4>' +
+            '<p>' + (a.purpose || "-") + ' · ' + (a.date || "-") + '</p>' +
+            '<p class="meta">Status: ' + a.status + '</p>' +
+            '<div class="row-actions">' +
+                (a.status !== "Approved" ? '<button class="btn-verify" onclick="setAdvanceStatus(\'' + a.id + '\',\'Approved\')">Approve</button>' : '') +
+                (a.status !== "Settled" ? '<button class="btn-verify" onclick="setAdvanceStatus(\'' + a.id + '\',\'Settled\')">Mark Settled</button>' : '') +
+                '<button class="btn-delete" onclick="deleteAdvanceEntry(\'' + a.id + '\')">Delete</button>' +
+            '</div></div>';
+    });
+}
+async function submitAdvance() {
+    const advance = {
+        personName: getValue("advancePersonName"), purpose: getValue("advancePurpose"),
+        amount: getValue("advanceAmount"), date: getValue("advanceDate")
+    };
+    if (!advance.personName || !advance.amount) return showMessage("fdMessage", "Name and amount are required.", "error");
+    showLoading();
+    const result = await callBackend("addAdvance", { admin: adminSession, advance: advance });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) {
+        ["advancePersonName","advancePurpose","advanceAmount","advanceDate"].forEach(id => document.getElementById(id).value = "");
+        advanceSubAction("list");
+    }
+}
+async function setAdvanceStatus(id, status) {
+    showLoading();
+    const result = await callBackend("updateAdvanceStatus", { admin: adminSession, id: id, status: status });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadAdvanceList();
+}
+async function deleteAdvanceEntry(id) {
+    showLoading();
+    const result = await callBackend("deleteAdvance", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadAdvanceList();
 }
 
 /* ===== ADMIN: Report & Registration ===== */
