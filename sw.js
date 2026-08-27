@@ -1,4 +1,4 @@
-const CACHE_NAME = "udoy-cache-v3";
+const CACHE_NAME = "udoy-cache-v5";
 const FILES_TO_CACHE = [
   "./manifest.json",
   "./logo.png",

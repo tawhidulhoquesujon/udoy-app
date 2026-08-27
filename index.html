@@ -1586,13 +1586,9 @@ firebase.initializeApp(firebaseConfig);
                     <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
                         <button class="tab-btn active" onclick="assetSubAction('list')">Asset List</button>
                         <button class="tab-btn" onclick="assetSubAction('add')">Add New Asset</button>
-                        <button class="tab-btn" onclick="assetSubAction('soon')">Transfer</button>
-                        <button class="tab-btn" onclick="assetSubAction('soon')">Maintenance</button>
-                        <button class="tab-btn" onclick="assetSubAction('soon')">Disposal</button>
-                        <button class="tab-btn" onclick="assetSubAction('soon')">Verification</button>
-                        <button class="tab-btn" onclick="assetSubAction('soon')">History</button>
-                        <button class="tab-btn" onclick="assetSubAction('soon')">Report</button>
+                        <button class="tab-btn" onclick="assetSubAction('history')">History</button>
                     </div>
+                    <p class="subtitle" style="margin-top:10px;">To Transfer / send for Maintenance / mark Damaged, Lost, Returned or Disposed — use the status buttons on each asset below.</p>
 
                     <div id="assetAddForm" class="hidden" style="margin-top:14px;">
                         <div class="input-group"><label>Asset Name</label><input type="text" id="assetName"></div>
@@ -1607,6 +1603,7 @@ firebase.initializeApp(firebaseConfig);
                         <button class="primary-btn" onclick="submitAsset()">Save Asset</button>
                     </div>
 
+                    <div id="assetHistoryView" class="hidden" style="margin-top:14px;"></div>
                     <div id="assetListView" style="margin-top:14px;"></div>
                 </div>
 
@@ -1619,10 +1616,10 @@ firebase.initializeApp(firebaseConfig);
                         <button class="tab-btn" onclick="stockSubAction('add')">Add Item</button>
                         <button class="tab-btn" onclick="stockSubAction('in')">Stock In</button>
                         <button class="tab-btn" onclick="stockSubAction('out')">Stock Out</button>
-                        <button class="tab-btn" onclick="stockSubAction('soon')">Adjustment</button>
-                        <button class="tab-btn" onclick="stockSubAction('soon')">Transfer</button>
-                        <button class="tab-btn" onclick="stockSubAction('soon')">History</button>
-                        <button class="tab-btn" onclick="stockSubAction('soon')">Report</button>
+                        <button class="tab-btn" onclick="stockSubAction('damaged')">Damaged</button>
+                        <button class="tab-btn" onclick="stockSubAction('lost')">Lost</button>
+                        <button class="tab-btn" onclick="stockSubAction('returned')">Returned</button>
+                        <button class="tab-btn" onclick="stockSubAction('history')">History</button>
                     </div>
 
                     <div id="stockAddForm" class="hidden" style="margin-top:14px;">
@@ -1644,6 +1641,7 @@ firebase.initializeApp(firebaseConfig);
                         <button class="primary-btn" onclick="submitStockTxn()" id="stockTxnBtn">Submit</button>
                     </div>
 
+                    <div id="stockHistoryView" class="hidden" style="margin-top:14px;"></div>
                     <div id="stockListView" style="margin-top:14px;"></div>
                 </div>
 
@@ -1654,12 +1652,9 @@ firebase.initializeApp(firebaseConfig);
                     <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
                         <button class="tab-btn active" onclick="advanceSubAction('list')">Advance List</button>
                         <button class="tab-btn" onclick="advanceSubAction('add')">New Advance</button>
-                        <button class="tab-btn" onclick="advanceSubAction('soon')">Payment</button>
-                        <button class="tab-btn" onclick="advanceSubAction('soon')">Adjustment</button>
-                        <button class="tab-btn" onclick="advanceSubAction('soon')">Return</button>
-                        <button class="tab-btn" onclick="advanceSubAction('soon')">History</button>
-                        <button class="tab-btn" onclick="advanceSubAction('soon')">Report</button>
+                        <button class="tab-btn" onclick="advanceSubAction('history')">History</button>
                     </div>
+                    <p class="subtitle" style="margin-top:10px;">To record a Payment, Adjustment/Settlement, or Return — use the buttons on each advance below.</p>
 
                     <div id="advanceAddForm" class="hidden" style="margin-top:14px;">
                         <div class="input-group"><label>Person Name</label><input type="text" id="advancePersonName"></div>
@@ -1669,6 +1664,7 @@ firebase.initializeApp(firebaseConfig);
                         <button class="primary-btn" onclick="submitAdvance()">Save Advance</button>
                     </div>
 
+                    <div id="advanceHistoryView" class="hidden" style="margin-top:14px;"></div>
                     <div id="advanceListView" style="margin-top:14px;"></div>
                 </div>
 
@@ -1759,11 +1755,35 @@ let emailVerified = false;
 let currentUser = null;
 
 /* ===== PAGE CONTROL ===== */
+let _isPopState = false;
+
 function showPage(pageId) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     const page = document.getElementById(pageId);
     if (page) page.classList.add("active");
+
+    if (!_isPopState) {
+        history.pushState({ page: pageId }, "", "#" + pageId);
+    }
+    _isPopState = false;
 }
+
+/* Android/PWA back button (and edge-swipe): navigate within the app
+   instead of exiting it, just like Facebook/Instagram. Only when
+   there is nothing left in our internal history does the back
+   button fall back to normal behavior (closing the app). */
+window.addEventListener("popstate", function(e) {
+    _isPopState = true;
+    const pageId = (e.state && e.state.page) ? e.state.page : "loginPage";
+    showPage(pageId);
+});
+
+window.addEventListener("load", function() {
+    const activePage = document.querySelector(".page.active");
+    const startId = activePage ? activePage.id : "loginPage";
+    history.replaceState({ page: startId }, "", "#" + startId);
+});
+
 function showLogin() { showPage("loginPage"); }
 function showSignup() { showPage("signupPage"); }
 function showForgot() { showPage("forgotPage"); }
@@ -3112,14 +3132,16 @@ function closeRegisterSub() {
     document.getElementById("registerMenu").classList.remove("hidden");
     ["Asset","Stock","Advance"].forEach(t => document.getElementById("register" + t).classList.add("hidden"));
 }
-function comingSoon() { alert("This feature is coming soon."); }
 
 /* ----- Asset Register ----- */
+const ASSET_STATUS_OPTIONS = ["Active","Transferred","Under Maintenance","Damaged","Lost","Returned","Disposed"];
+
 function assetSubAction(action) {
     document.getElementById("assetAddForm").classList.toggle("hidden", action !== "add");
-    document.getElementById("assetListView").classList.toggle("hidden", action === "add");
+    document.getElementById("assetHistoryView").classList.toggle("hidden", action !== "history");
+    document.getElementById("assetListView").classList.toggle("hidden", action === "add" || action === "history");
     if (action === "list") loadAssetList();
-    if (action === "soon") comingSoon();
+    if (action === "history") loadAssetHistory();
 }
 async function loadAssetList() {
     const view = document.getElementById("assetListView");
@@ -3129,10 +3151,37 @@ async function loadAssetList() {
     if (result.assets.length === 0) { view.innerHTML = '<p class="policy-empty">No assets added yet.</p>'; return; }
     view.innerHTML = "";
     result.assets.forEach(a => {
+        const statusButtons = ASSET_STATUS_OPTIONS.filter(s => s !== a.status).map(s =>
+            '<button class="btn-verify" onclick="changeAssetStatus(\'' + a.id + '\',\'' + s + '\')">' + s + '</button>'
+        ).join("");
         view.innerHTML += '<div class="list-item"><h4>' + a.name + ' (' + (a.category || "-") + ')</h4>' +
             '<p>Value: ৳' + Number(a.value || 0).toLocaleString() + ' · Location: ' + (a.location || "-") + '</p>' +
             '<p class="meta">Status: ' + a.status + ' · Purchased: ' + (a.purchaseDate || "-") + '</p>' +
-            '<div class="row-actions"><button class="btn-delete" onclick="deleteAssetEntry(\'' + a.id + '\')">Delete</button></div></div>';
+            '<div class="row-actions" style="flex-wrap:wrap;">' + statusButtons +
+                '<button class="btn-delete" onclick="deleteAssetEntry(\'' + a.id + '\')">Delete</button>' +
+            '</div></div>';
+    });
+}
+async function changeAssetStatus(assetId, status) {
+    const details = prompt("Optional note for this status change (e.g. transferred to, repair details):", "");
+    if (details === null) return;
+    showLoading();
+    const result = await callBackend("updateAssetStatus", { admin: adminSession, assetId: assetId, status: status, details: details });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadAssetList();
+}
+async function loadAssetHistory() {
+    const view = document.getElementById("assetHistoryView");
+    view.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getAssetHistory", { admin: adminSession });
+    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
+    if (result.history.length === 0) { view.innerHTML = '<p class="policy-empty">No history yet.</p>'; return; }
+    view.innerHTML = "";
+    result.history.forEach(h => {
+        view.innerHTML += '<div class="list-item"><h4>' + h.assetName + ' — ' + h.action + '</h4>' +
+            (h.details ? '<p>' + h.details + '</p>' : '') +
+            '<p class="meta">By ' + h.by + ' · ' + formatDate(h.timestamp) + '</p></div>';
     });
 }
 async function submitAsset() {
@@ -3160,17 +3209,22 @@ async function deleteAssetEntry(id) {
 }
 
 /* ----- Stock Register ----- */
+const STOCK_TXN_ACTIONS = { in: "stockIn", out: "stockOut", damaged: "stockDamaged", lost: "stockLost", returned: "stockReturned" };
+const STOCK_TXN_LABELS = { in: "Record Stock In", out: "Record Stock Out", damaged: "Record Damaged", lost: "Record Lost", returned: "Record Returned" };
+
 function stockSubAction(action) {
+    const isTxn = STOCK_TXN_ACTIONS.hasOwnProperty(action);
     document.getElementById("stockAddForm").classList.toggle("hidden", action !== "add");
-    document.getElementById("stockInOutForm").classList.toggle("hidden", action !== "in" && action !== "out");
-    document.getElementById("stockListView").classList.toggle("hidden", action === "add" || action === "in" || action === "out");
-    if (action === "in" || action === "out") {
-        document.getElementById("stockTxnBtn").textContent = action === "in" ? "Record Stock In" : "Record Stock Out";
+    document.getElementById("stockInOutForm").classList.toggle("hidden", !isTxn);
+    document.getElementById("stockHistoryView").classList.toggle("hidden", action !== "history");
+    document.getElementById("stockListView").classList.toggle("hidden", action === "add" || isTxn || action === "history");
+    if (isTxn) {
+        document.getElementById("stockTxnBtn").textContent = STOCK_TXN_LABELS[action];
         document.getElementById("stockTxnBtn").dataset.type = action;
         loadStockItemOptions();
     }
     if (action === "list") loadStockList();
-    if (action === "soon") comingSoon();
+    if (action === "history") loadStockHistory();
 }
 async function loadStockItemOptions() {
     const select = document.getElementById("stockTxnItem");
@@ -3198,6 +3252,19 @@ async function loadStockList() {
             '<div class="row-actions"><button class="btn-delete" onclick="deleteStockItemEntry(\'' + it.id + '\')">Delete</button></div></div>';
     });
 }
+async function loadStockHistory() {
+    const view = document.getElementById("stockHistoryView");
+    view.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getStockHistory", { admin: adminSession });
+    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
+    if (result.history.length === 0) { view.innerHTML = '<p class="policy-empty">No stock history yet.</p>'; return; }
+    view.innerHTML = "";
+    result.history.forEach(h => {
+        view.innerHTML += '<div class="list-item"><h4>' + h.itemName + ' — ' + h.type + ' (' + h.quantity + ')</h4>' +
+            (h.note ? '<p>' + h.note + '</p>' : '') +
+            '<p class="meta">By ' + h.by + ' · ' + formatDate(h.timestamp) + '</p></div>';
+    });
+}
 async function submitStockItem() {
     const item = {
         name: getValue("stockItemName"), category: getValue("stockCategory"), unit: getValue("stockUnit"),
@@ -3220,8 +3287,7 @@ async function submitStockTxn() {
     const note = getValue("stockTxnNote");
     if (!itemId || !qty) return showMessage("fdMessage", "Select an item and enter quantity.", "error");
     showLoading();
-    const action = type === "in" ? "stockIn" : "stockOut";
-    const result = await callBackend(action, { admin: adminSession, itemId: itemId, quantity: qty, note: note });
+    const result = await callBackend(STOCK_TXN_ACTIONS[type], { admin: adminSession, itemId: itemId, quantity: qty, note: note });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
     if (result.success) {
@@ -3241,9 +3307,10 @@ async function deleteStockItemEntry(id) {
 /* ----- Advance Register ----- */
 function advanceSubAction(action) {
     document.getElementById("advanceAddForm").classList.toggle("hidden", action !== "add");
-    document.getElementById("advanceListView").classList.toggle("hidden", action === "add");
+    document.getElementById("advanceHistoryView").classList.toggle("hidden", action !== "history");
+    document.getElementById("advanceListView").classList.toggle("hidden", action === "add" || action === "history");
     if (action === "list") loadAdvanceList();
-    if (action === "soon") comingSoon();
+    if (action === "history") loadAdvanceHistory();
 }
 async function loadAdvanceList() {
     const view = document.getElementById("advanceListView");
@@ -3253,14 +3320,42 @@ async function loadAdvanceList() {
     if (result.advances.length === 0) { view.innerHTML = '<p class="policy-empty">No advances recorded yet.</p>'; return; }
     view.innerHTML = "";
     result.advances.forEach(a => {
-        view.innerHTML += '<div class="list-item"><h4>' + a.personName + ' — ৳' + Number(a.amount).toLocaleString() + '</h4>' +
+        view.innerHTML += '<div class="list-item"><h4>' + a.personName + ' — Requested ৳' + Number(a.amount).toLocaleString() + '</h4>' +
             '<p>' + (a.purpose || "-") + ' · ' + (a.date || "-") + '</p>' +
-            '<p class="meta">Status: ' + a.status + '</p>' +
-            '<div class="row-actions">' +
-                (a.status !== "Approved" ? '<button class="btn-verify" onclick="setAdvanceStatus(\'' + a.id + '\',\'Approved\')">Approve</button>' : '') +
-                (a.status !== "Settled" ? '<button class="btn-verify" onclick="setAdvanceStatus(\'' + a.id + '\',\'Settled\')">Mark Settled</button>' : '') +
+            '<p class="meta">Status: ' + a.status + ' · Paid: ৳' + a.totalPaid.toLocaleString() + ' · Adjusted: ৳' + a.totalAdjusted.toLocaleString() + ' · Returned: ৳' + a.totalReturned.toLocaleString() + '</p>' +
+            '<p class="meta">Outstanding: ৳' + a.outstanding.toLocaleString() + '</p>' +
+            '<div class="row-actions" style="flex-wrap:wrap;">' +
+                '<button class="btn-verify" onclick="recordAdvanceTxn(\'' + a.id + '\',\'Payment\')">Payment</button>' +
+                '<button class="btn-verify" onclick="recordAdvanceTxn(\'' + a.id + '\',\'Adjustment\')">Adjustment</button>' +
+                '<button class="btn-verify" onclick="recordAdvanceTxn(\'' + a.id + '\',\'Return\')">Return</button>' +
+                (a.status === "Pending" ? '<button class="btn-verify" onclick="setAdvanceStatus(\'' + a.id + '\',\'Approved\')">Approve</button>' : '') +
                 '<button class="btn-delete" onclick="deleteAdvanceEntry(\'' + a.id + '\')">Delete</button>' +
             '</div></div>';
+    });
+}
+async function recordAdvanceTxn(advanceId, type) {
+    const amountStr = prompt(type + " amount (৳):", "");
+    if (amountStr === null || !amountStr.trim()) return;
+    const amount = Number(amountStr);
+    if (!amount || amount <= 0) { alert("Enter a valid amount."); return; }
+    const note = prompt("Optional note:", "") || "";
+    showLoading();
+    const result = await callBackend("addAdvanceTransaction", { admin: adminSession, advanceId: advanceId, type: type, amount: amount, note: note });
+    hideLoading();
+    showMessage("fdMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadAdvanceList();
+}
+async function loadAdvanceHistory() {
+    const view = document.getElementById("advanceHistoryView");
+    view.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getAdvanceHistory", { admin: adminSession, advanceId: null });
+    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
+    if (result.history.length === 0) { view.innerHTML = '<p class="policy-empty">No advance transactions yet.</p>'; return; }
+    view.innerHTML = "";
+    result.history.forEach(h => {
+        view.innerHTML += '<div class="list-item"><h4>' + h.type + ' — ৳' + Number(h.amount).toLocaleString() + '</h4>' +
+            (h.note ? '<p>' + h.note + '</p>' : '') +
+            '<p class="meta">By ' + h.by + ' · ' + formatDate(h.timestamp) + '</p></div>';
     });
 }
 async function submitAdvance() {
