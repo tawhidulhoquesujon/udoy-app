@@ -503,6 +503,29 @@ select {
 .dashboard-info h3 { font-family: var(--font-display); font-size: 14.5px; color: var(--green-deep); }
 .dashboard-info p { color: var(--sage); font-size: 12.5px; margin-top: 6px; line-height: 1.5; }
 
+.install-app-btn {
+    display: block; width: 100%; margin-top: 14px;
+    background: var(--green); color: var(--paper);
+    border: none; border-radius: 14px; padding: 14px;
+    font-family: var(--font-display); font-weight: 600; font-size: 14px;
+    box-shadow: 0 10px 20px rgba(15,61,46,.22);
+}
+.install-app-btn.hidden { display: none; }
+
+.ios-install-banner {
+    margin-top: 14px; padding: 16px;
+    background: var(--paper-dim); border: 1px dashed var(--gold);
+    border-radius: 14px; text-align: center;
+}
+.ios-install-banner p { margin: 0 0 8px; font-size: 13px; color: var(--ink); line-height: 1.5; }
+.ios-install-banner .ios-share-icon { font-size: 15px; }
+.ios-install-close {
+    margin-top: 4px; background: var(--green); color: var(--paper);
+    border: none; border-radius: 10px; padding: 8px 18px;
+    font-family: var(--font-display); font-weight: 600; font-size: 13px;
+}
+.ios-install-banner.hidden { display: none; }
+
 /* ===== LOADING ===== */
 
 .loading {
@@ -997,6 +1020,14 @@ firebase.initializeApp(firebaseConfig);
             <a class="mini-fab" href="https://www.facebook.com/share/1DG42oQcSZ/" target="_blank" rel="noopener" title="Facebook page">📘</a>
             <a class="mini-fab" href="tel:01806575737" title="Helpline">☎️</a>
             <button class="mini-fab" onclick="showPage('reportPage')" title="Report">⚠️</button>
+        </div>
+
+        <button id="installAppBtn" class="install-app-btn hidden" onclick="installApp()">⬇️ Install App</button>
+
+        <div id="iosInstallBanner" class="ios-install-banner hidden">
+            <p><strong>📱 Add UDOY to your Home Screen</strong></p>
+            <p>Tap the Share button <span class="ios-share-icon">⬆️</span> below, then choose <strong>"Add to Home Screen"</strong>.</p>
+            <button class="ios-install-close" onclick="dismissIosBanner()">Got it</button>
         </div>
 
     </section>
@@ -1783,6 +1814,57 @@ window.addEventListener("load", function() {
     const startId = activePage ? activePage.id : "loginPage";
     history.replaceState({ page: startId }, "", "#" + startId);
 });
+
+/* ===== INSTALL APP ===== */
+let _deferredInstallPrompt = null;
+
+function isStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function isIos() {
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+/* Android/Chrome: real "Install app" prompt via the browser's own API */
+window.addEventListener("beforeinstallprompt", function(e) {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+    const btn = document.getElementById("installAppBtn");
+    if (btn && !isStandalone()) btn.classList.remove("hidden");
+});
+
+function installApp() {
+    const btn = document.getElementById("installAppBtn");
+    if (!_deferredInstallPrompt) return;
+    _deferredInstallPrompt.prompt();
+    _deferredInstallPrompt.userChoice.finally(function() {
+        _deferredInstallPrompt = null;
+        if (btn) btn.classList.add("hidden");
+    });
+}
+
+window.addEventListener("appinstalled", function() {
+    const btn = document.getElementById("installAppBtn");
+    if (btn) btn.classList.add("hidden");
+});
+
+/* iPhone/Safari: there is no install API, so show manual instructions
+   instead — unless the app is already running standalone, or the
+   person already dismissed this once. */
+window.addEventListener("load", function() {
+    const banner = document.getElementById("iosInstallBanner");
+    if (!banner) return;
+    if (isIos() && !isStandalone() && !localStorage.getItem("udoy_ios_banner_dismissed")) {
+        banner.classList.remove("hidden");
+    }
+});
+
+function dismissIosBanner() {
+    const banner = document.getElementById("iosInstallBanner");
+    if (banner) banner.classList.add("hidden");
+    localStorage.setItem("udoy_ios_banner_dismissed", "1");
+}
 
 function showLogin() { showPage("loginPage"); }
 function showSignup() { showPage("signupPage"); }
