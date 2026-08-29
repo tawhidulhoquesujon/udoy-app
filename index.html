@@ -307,6 +307,18 @@ select {
 }
 .top-header p { color: var(--sage); font-size: 12.5px; margin-top: 2px; }
 
+.taso-header-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,.18);
+}
+.taso-welcome-banner {
+    display: block; max-width: 220px; margin: 6px auto 14px;
+}
+.sector-card-icon-img {
+    width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+}
+
 .back-btn {
     width: 42px; height: 42px;
     border-radius: 50%;
@@ -1009,6 +1021,11 @@ firebase.initializeApp(firebaseConfig);
                 <h3>Message Box</h3>
                 <p>Community chat</p>
             </button>
+            <button class="sector-card" onclick="openAiAssistant()">
+                <div class="icon"><img src="taso-icon-512.png" alt="TASO Ai" class="sector-card-icon-img"></div>
+                <h3>TASO Ai</h3>
+                <p>Ask anything, anytime</p>
+            </button>
         </div>
 
         <div class="dashboard-info">
@@ -1324,6 +1341,23 @@ firebase.initializeApp(firebaseConfig);
             <div class="verify-row" style="margin-top:10px;">
                 <input type="text" id="messageInput" placeholder="Type a message…" oninput="notifyTyping()">
                 <button class="verify-btn" onclick="doSendMessage()">Send</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI ASSISTANT -->
+    <section id="aiAssistantPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
+            <img src="taso-icon-512.png" alt="TASO Ai" class="taso-header-icon">
+            <div><h2>TASO Ai</h2><p>Ask anything — payment, registration, or general help</p></div>
+        </div>
+        <div class="card">
+            <div id="aiChatList" class="message-list"></div>
+            <p id="aiTypingIndicator" class="small-text" style="min-height:16px;margin-top:6px;"></p>
+            <div class="verify-row" style="margin-top:10px;">
+                <input type="text" id="aiChatInput" placeholder="Type your question…" onkeydown="if(event.key==='Enter'){sendAiMessage();}">
+                <button class="verify-btn" onclick="sendAiMessage()">Send</button>
             </div>
         </div>
     </section>
@@ -3631,6 +3665,64 @@ document.addEventListener("DOMContentLoaded", function() {
         localStorage.removeItem("udoy_user");
     }
 });
+
+/* ===== AI ASSISTANT ===== */
+let aiChatHistory = [];
+
+function openAiAssistant() {
+    showPage("aiAssistantPage");
+    renderAiChat();
+}
+
+function escapeHtmlAi(str) {
+    return String(str || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderAiChat() {
+    const list = document.getElementById("aiChatList");
+    if (!list) return;
+    list.innerHTML = "";
+    if (aiChatHistory.length === 0) {
+        list.innerHTML = '<img src="taso-logo-banner.png" alt="TASO Ai" class="taso-welcome-banner">' +
+            '<div class="chat-bubble"><p class="who">TASO Ai</p><p class="text">আসসালামু আলাইকুম! আমি TASO Ai। রেজিস্ট্রেশন, পেমেন্ট, অথবা app-এ যেকোনো সমস্যা নিয়ে জিজ্ঞাসা করতে পারেন — অথবা যেকোনো সাধারণ প্রশ্নও করতে পারেন।</p></div>';
+        return;
+    }
+    aiChatHistory.forEach(m => {
+        const mine = m.role === "user";
+        list.innerHTML += '<div class="chat-bubble' + (mine ? ' mine' : '') + '"><p class="who">' + (mine ? "You" : "TASO Ai") + '</p><p class="text">' + escapeHtmlAi(m.text) + '</p></div>';
+    });
+    list.scrollTop = list.scrollHeight;
+}
+
+async function sendAiMessage() {
+    const input = document.getElementById("aiChatInput");
+    const typing = document.getElementById("aiTypingIndicator");
+    const text = input.value.trim();
+    if (!text) return;
+
+    aiChatHistory.push({ role: "user", text: text });
+    renderAiChat();
+    input.value = "";
+    typing.textContent = "TASO Ai is typing…";
+
+    try {
+        const result = await callBackend("askAI", {
+            question: text,
+            history: aiChatHistory.slice(-10)
+        });
+        typing.textContent = "";
+        if (result.success) {
+            aiChatHistory.push({ role: "assistant", text: result.answer });
+        } else {
+            aiChatHistory.push({ role: "assistant", text: result.message || "দুঃখিত, উত্তর দিতে পারলাম না। একটু পর আবার চেষ্টা করুন।" });
+        }
+        renderAiChat();
+    } catch (err) {
+        typing.textContent = "";
+        aiChatHistory.push({ role: "assistant", text: "নেটওয়ার্ক সমস্যা হয়েছে। আবার চেষ্টা করুন।" });
+        renderAiChat();
+    }
+}
 
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", function() {
