@@ -524,6 +524,25 @@ select {
 }
 .install-app-btn.hidden { display: none; }
 
+.taso-float-btn {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top));
+    right: 18px;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: none; padding: 0;
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(0,0,0,.25);
+    z-index: 40;
+    background: transparent;
+}
+.taso-float-btn img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
 .ios-install-banner {
     margin-top: 14px; padding: 16px;
     background: var(--paper-dim); border: 1px dashed var(--gold);
@@ -827,8 +846,8 @@ firebase.initializeApp(firebaseConfig);
                 </div>
                 <div class="two-column">
                     <div class="input-group">
-                        <label>Region</label>
-                        <input type="text" id="gpRegion" required>
+                        <label>Religion</label>
+                        <input type="text" id="gpRegion" placeholder="Your religion" required>
                     </div>
                     <div class="input-group">
                         <label>Country</label>
@@ -907,8 +926,8 @@ firebase.initializeApp(firebaseConfig);
 
                 <div class="two-column">
                     <div class="input-group">
-                        <label for="region">Region</label>
-                        <input type="text" id="region" placeholder="Your region" required>
+                        <label for="region">Religion</label>
+                        <input type="text" id="region" placeholder="Your religion" required>
                     </div>
                     <div class="input-group">
                         <label for="country">Country</label>
@@ -1034,12 +1053,15 @@ firebase.initializeApp(firebaseConfig);
         </div>
 
         <div class="mini-fab-stack">
-            <a class="mini-fab" href="https://www.facebook.com/share/1DG42oQcSZ/" target="_blank" rel="noopener" title="Facebook page">📘</a>
             <a class="mini-fab" href="tel:01806575737" title="Helpline">☎️</a>
             <button class="mini-fab" onclick="showPage('reportPage')" title="Report">⚠️</button>
         </div>
 
         <button id="installAppBtn" class="install-app-btn hidden" onclick="installApp()">⬇️ Install App</button>
+
+        <button class="taso-float-btn" onclick="openAiAssistant()" title="TASO Ai">
+            <img src="taso-icon-512.png" alt="TASO Ai">
+        </button>
 
         <div id="iosInstallBanner" class="ios-install-banner hidden">
             <p><strong>📱 Add UDOY to your Home Screen</strong></p>
@@ -1822,10 +1844,23 @@ let currentUser = null;
 /* ===== PAGE CONTROL ===== */
 let _isPopState = false;
 
+/* Pages that make sense to restore to after a refresh, while logged in
+   as a member. Auth pages (login/signup) and admin panels (whose
+   session is never persisted) are deliberately excluded. */
+const RESTORABLE_MEMBER_PAGES = [
+    "homePage", "memberMenuPage", "profilePage", "settingsPage",
+    "noticeBoardPage", "messageBoxPage", "aiAssistantPage", "reportPage",
+    "paymentPage", "policyPage", "registrationFormPage"
+];
+
 function showPage(pageId) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     const page = document.getElementById(pageId);
     if (page) page.classList.add("active");
+
+    if (currentUser && RESTORABLE_MEMBER_PAGES.indexOf(pageId) !== -1) {
+        localStorage.setItem("udoy_last_page", pageId);
+    }
 
     if (!_isPopState) {
         history.pushState({ page: pageId }, "", "#" + pageId);
@@ -2237,6 +2272,7 @@ async function refreshCurrentUser() {
 function logout() {
     currentUser = null;
     localStorage.removeItem("udoy_user");
+    localStorage.removeItem("udoy_last_page");
     document.getElementById("loginForm")?.reset();
     showLogin();
 }
@@ -2258,6 +2294,8 @@ function goToSettings() {
     showPage("settingsPage");
 }
 
+let profileEditMode = false;
+
 function renderProfile() {
     const card = document.getElementById("profileCard");
     if (!card || !currentUser) return;
@@ -2271,17 +2309,71 @@ function renderProfile() {
             '</div>' +
             '<div><p class="small-text">Member ID</p><h2>' + (currentUser.memberId || "-") + '</h2></div>' +
         '</div>' +
-        profileRow("Full name", currentUser.name) +
-        profileRow("Username", "@" + currentUser.username) +
-        profileRow("Gmail", currentUser.email) +
-        profileRow("Mobile", currentUser.mobile) +
-        profileRow("Date of birth", formatDateOnly(currentUser.dob)) +
-        profileRow("Gender", currentUser.gender) +
-        profileRow("Region", currentUser.region) +
-        profileRow("Country", currentUser.country);
+        profileRow("Full name", "profileEditName", currentUser.name, true) +
+        profileRow("Username", null, "@" + currentUser.username, false) +
+        profileRow("Gmail", null, currentUser.email, false) +
+        profileRow("Mobile", "profileEditMobile", currentUser.mobile, true) +
+        profileRow("Date of birth", null, formatDateOnly(currentUser.dob), false) +
+        profileRow("Gender", null, currentUser.gender, false) +
+        profileRow("Religion", "profileEditReligion", currentUser.region, true) +
+        profileRow("Country", null, currentUser.country, false) +
+        '<div id="profileEditMessage" class="message"></div>' +
+        (profileEditMode
+            ? '<button class="primary-btn" onclick="saveProfileEdits()">💾 Save Changes</button>' +
+              '<button class="secondary-btn" style="margin-top:8px;" onclick="cancelProfileEdit()">Cancel</button>'
+            : '<button class="primary-btn" onclick="startProfileEdit()">✏️ Edit Profile</button>');
 }
-function profileRow(label, value) {
-    return '<div class="input-group"><label>' + label + '</label><input type="text" value="' + (value || "-") + '" readonly></div>';
+
+function profileRow(label, id, value, editable) {
+    const isEditing = editable && profileEditMode;
+    const idAttr = id ? ' id="' + id + '"' : '';
+    return '<div class="input-group"><label>' + label + '</label><input type="text"' + idAttr +
+        ' value="' + escapeHtmlAi(value || "-") + '"' + (isEditing ? '' : ' readonly') + '></div>';
+}
+
+function startProfileEdit() {
+    profileEditMode = true;
+    renderProfile();
+}
+
+function cancelProfileEdit() {
+    profileEditMode = false;
+    renderProfile();
+}
+
+async function saveProfileEdits() {
+    const name = document.getElementById("profileEditName").value.trim();
+    const mobile = document.getElementById("profileEditMobile").value.trim();
+    const religion = document.getElementById("profileEditReligion").value.trim();
+
+    if (!name || !mobile || !religion) {
+        return showMessage("profileEditMessage", "Please fill in all fields.", "error");
+    }
+
+    showLoading();
+    try {
+        const result = await callBackend("updateProfileDetails", {
+            username: currentUser.username, name: name, mobile: mobile, region: religion
+        });
+        hideLoading();
+        if (result.success) {
+            currentUser.name = name;
+            currentUser.mobile = mobile;
+            currentUser.region = religion;
+            localStorage.setItem("udoy_user", JSON.stringify(currentUser));
+            updateAvatarElements(currentUser);
+            const dashName = document.getElementById("dashboardName");
+            if (dashName) dashName.textContent = name;
+            profileEditMode = false;
+            renderProfile();
+            showMessage("profileEditMessage", "Profile updated successfully.", "success");
+        } else {
+            showMessage("profileEditMessage", result.message || "Could not update profile.", "error");
+        }
+    } catch (err) {
+        hideLoading();
+        showMessage("profileEditMessage", "Network error. Please try again.", "error");
+    }
 }
 
 /* =========================================================
@@ -3659,6 +3751,22 @@ document.addEventListener("DOMContentLoaded", function() {
             if (user && user.username) {
                 currentUser = user;
                 openDashboard(user);
+
+                // Restore whichever page the user was on before the
+                // refresh, using the same "opener" each page normally
+                // uses so its data loads correctly (not just a blank shell).
+                const lastPage = localStorage.getItem("udoy_last_page");
+                if (lastPage && lastPage !== "homePage" && RESTORABLE_MEMBER_PAGES.indexOf(lastPage) !== -1) {
+                    switch (lastPage) {
+                        case "profilePage": goToProfile(); break;
+                        case "noticeBoardPage": openNoticeBoard(); break;
+                        case "messageBoxPage": openMessageBox(); break;
+                        case "aiAssistantPage": openAiAssistant(); break;
+                        case "policyPage": openPolicyPage(); break;
+                        case "registrationFormPage": openRegistrationForm(); break;
+                        default: showPage(lastPage);
+                    }
+                }
             }
         }
     } catch (error) {
