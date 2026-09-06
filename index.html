@@ -524,25 +524,6 @@ select {
 }
 .install-app-btn.hidden { display: none; }
 
-.taso-float-btn {
-    position: fixed;
-    top: calc(16px + env(safe-area-inset-top));
-    right: 18px;
-    width: 48px; height: 48px;
-    border-radius: 50%;
-    border: none; padding: 0;
-    overflow: hidden;
-    box-shadow: 0 6px 16px rgba(0,0,0,.25);
-    z-index: 40;
-    background: transparent;
-}
-.taso-float-btn img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    display: block;
-}
-
 .ios-install-banner {
     margin-top: 14px; padding: 16px;
     background: var(--paper-dim); border: 1px dashed var(--gold);
@@ -564,7 +545,7 @@ select {
     background: rgba(251,246,236,.92);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    z-index: 999;
+    z-index: 1100;
 }
 .loading p {
     margin-top: 14px; font-family: var(--font-mono);
@@ -729,6 +710,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyC3YiOhP59yaYAgUIAkDIKYplZdbJGmz2c",
@@ -740,6 +722,46 @@ const firebaseConfig = {
   appId: "1:415206992827:web:ceeb388f46089298c8329e"
 };
 firebase.initializeApp(firebaseConfig);
+
+/* ===== PUSH NOTIFICATIONS (new Notice alerts) ===== */
+async function enablePushNotifications() {
+    try {
+        if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+        if (Notification.permission === "denied") return;
+
+        const alreadySubscribed = localStorage.getItem("udoy_push_subscribed") === "1";
+
+        if (!alreadySubscribed) {
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") return;
+        }
+        if (Notification.permission !== "granted") return;
+
+        const registration = await navigator.serviceWorker.ready;
+        const messaging = firebase.messaging();
+
+        if (!alreadySubscribed) {
+            const token = await messaging.getToken({
+                vapidKey: "BMxx4ohUFgjkp6KHMRakjEb_PND1JVfA32ufbj8UDE61eAeh7xfYNn0polWw2WL0guSag5_5gNjeudwrDg1vmIM",
+                serviceWorkerRegistration: registration
+            });
+            if (token) {
+                await callBackend("subscribeToNotifications", { token: token });
+                localStorage.setItem("udoy_push_subscribed", "1");
+            }
+        }
+
+        // Foreground alerts — FCM only shows a system notification automatically
+        // when the app isn't focused, so handle the "app already open" case here.
+        messaging.onMessage(function(payload) {
+            const title = (payload.notification && payload.notification.title) || "UDOY";
+            const body = (payload.notification && payload.notification.body) || "";
+            new Notification(title, { body: body, icon: "icon-192.png" });
+        });
+    } catch (err) {
+        console.log("Push notification setup skipped:", err);
+    }
+}
 </script>
 </head>
 
@@ -1059,10 +1081,6 @@ firebase.initializeApp(firebaseConfig);
         </div>
 
         <button id="installAppBtn" class="install-app-btn hidden" onclick="installApp()">⬇️ Install App</button>
-
-        <button class="taso-float-btn" onclick="openAiAssistant()" title="TASO Ai">
-            <img src="taso-icon-512.png" alt="TASO Ai">
-        </button>
 
         <div id="iosInstallBanner" class="ios-install-banner hidden">
             <p><strong>📱 Add UDOY to your Home Screen</strong></p>
@@ -1646,6 +1664,7 @@ firebase.initializeApp(firebaseConfig);
 
             <!-- MEMBER PAYMENTS -->
             <div id="fdPanelPayments" class="hidden">
+                <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportPaymentsCSV()">⬇️ Export CSV</button>
                 <div id="fdPaymentList"></div>
             </div>
 
@@ -1782,9 +1801,11 @@ firebase.initializeApp(firebaseConfig);
         <div class="card">
             <div id="rrMessage" class="message"></div>
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Reports</h3>
+            <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportReportsCSV()">⬇️ Export CSV</button>
             <div id="rrReportList"></div>
             <div class="stitch small"></div>
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Member directory</h3>
+            <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportMembersCSV()">⬇️ Export CSV</button>
             <div id="rrMemberList"></div>
             <div class="stitch small"></div>
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Admin directory</h3>
@@ -2233,6 +2254,7 @@ function openDashboard(user) {
 
     showPage("homePage");
     refreshCurrentUser(); // quietly pull the latest data in case an admin changed something
+    enablePushNotifications();
 }
 
 function updateAvatarElements(user) {
@@ -2474,8 +2496,15 @@ function closeCropModal() {
     cropImg = null;
 }
 
+let isUploadingPhoto = false;
+
 async function saveCroppedPhoto() {
-    if (!cropImg || !currentUser) return;
+    if (!cropImg || !currentUser || isUploadingPhoto) return;
+    isUploadingPhoto = true;
+
+    const saveBtn = document.querySelector('#cropOverlay .primary-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Saving…"; }
+
     const sourceCanvas = document.getElementById("cropCanvas");
     // Export a fixed-size square JPEG from the visible circular crop area
     const outputCanvas = document.createElement("canvas");
@@ -2505,6 +2534,9 @@ async function saveCroppedPhoto() {
     } catch (err) {
         hideLoading();
         showMessage("cropMessage", "Upload failed. Check your connection.", "error");
+    } finally {
+        isUploadingPhoto = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "Save Photo"; }
     }
 }
 
@@ -2923,6 +2955,76 @@ function escapeHtml(str) {
 }
 
 /* =========================================================
+   CSV EXPORT (Admin panels — Payments / Members / Reports)
+========================================================= */
+let _lastPayments = [];
+let _lastMembers = [];
+let _lastReports = [];
+
+function csvEscape(value) {
+    const s = (value === null || value === undefined) ? "" : String(value);
+    if (s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1) {
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+}
+
+function downloadCSV(filename, headers, rows) {
+    if (!rows || rows.length === 0) {
+        alert("No data to export yet.");
+        return;
+    }
+    let csv = headers.map(csvEscape).join(",") + "\r\n";
+    rows.forEach(row => {
+        csv += row.map(csvEscape).join(",") + "\r\n";
+    });
+    // BOM so Bengali text opens correctly in Excel
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function exportPaymentsCSV() {
+    const rows = _lastPayments.map(p => [
+        p.memberId, p.username, p.amount, p.method, p.purpose,
+        p.transactionId, p.month, p.status, formatDate(p.timestamp)
+    ]);
+    downloadCSV(
+        "UDOY_Payments_" + new Date().toISOString().slice(0, 10) + ".csv",
+        ["Member ID", "Username", "Amount", "Method", "Purpose", "Transaction ID", "Month", "Status", "Timestamp"],
+        rows
+    );
+}
+
+function exportMembersCSV() {
+    const rows = _lastMembers.map(m => [
+        m.memberId, m.name, m.username, m.mobile, m.email, m.status
+    ]);
+    downloadCSV(
+        "UDOY_Members_" + new Date().toISOString().slice(0, 10) + ".csv",
+        ["Member ID", "Name", "Username", "Mobile", "Email", "Status"],
+        rows
+    );
+}
+
+function exportReportsCSV() {
+    const rows = _lastReports.map(r => [
+        r.username, r.subject, r.description, formatDate(r.timestamp)
+    ]);
+    downloadCSV(
+        "UDOY_Reports_" + new Date().toISOString().slice(0, 10) + ".csv",
+        ["Username", "Subject", "Description", "Timestamp"],
+        rows
+    );
+}
+
+/* =========================================================
    REPORT
 ========================================================= */
 function setupReport() {
@@ -3305,6 +3407,7 @@ async function loadFdPayments() {
     list.innerHTML = '<p class="policy-empty">Loading…</p>';
     const result = await callBackend("getPayments", { admin: adminSession });
     if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
+    _lastPayments = result.payments;
     list.innerHTML = "";
     if (result.payments.length === 0) { list.innerHTML = '<p class="policy-empty">No payments yet.</p>'; return; }
     result.payments.forEach(p => {
@@ -3609,6 +3712,7 @@ async function loadRrReportsAndMembers() {
 
     const reportResult = await callBackend("getReports", { admin: adminSession });
     if (reportResult.success) {
+        _lastReports = reportResult.reports;
         reportList.innerHTML = "";
         if (reportResult.reports.length === 0) reportList.innerHTML = '<p class="policy-empty">No reports yet.</p>';
         reportResult.reports.forEach(r => {
@@ -3622,6 +3726,7 @@ async function loadRrReportsAndMembers() {
 
     const memberResult = await callBackend("getMembers", { admin: adminSession });
     if (memberResult.success) {
+        _lastMembers = memberResult.members;
         memberList.innerHTML = "";
         if (memberResult.members.length === 0) memberList.innerHTML = '<p class="policy-empty">No members yet.</p>';
         memberResult.members.forEach(m => {

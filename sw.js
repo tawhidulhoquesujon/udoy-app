@@ -1,4 +1,4 @@
-const CACHE_NAME = "udoy-cache-v7";
+const CACHE_NAME = "udoy-cache-v8";
 const FILES_TO_CACHE = [
   "./manifest.json",
   "./logo.png",
@@ -6,6 +6,31 @@ const FILES_TO_CACHE = [
   "./icon-512.png",
   "./icon-512-maskable.png"
 ];
+
+/* ===== PUSH NOTIFICATIONS (background — app not in focus) ===== */
+importScripts("https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js");
+
+firebase.initializeApp({
+  apiKey: "AIzaSyC3YiOhP59yaYAgUIAkDIKYplZdbJGmz2c",
+  authDomain: "udoy-8632c.firebaseapp.com",
+  databaseURL: "https://udoy-8632c-default-rtdb.firebaseio.com",
+  projectId: "udoy-8632c",
+  storageBucket: "udoy-8632c.firebasestorage.app",
+  messagingSenderId: "415206992827",
+  appId: "1:415206992827:web:ceeb388f46089298c8329e"
+});
+
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage(function(payload) {
+  const title = (payload.notification && payload.notification.title) || "UDOY";
+  const options = {
+    body: (payload.notification && payload.notification.body) || "",
+    icon: "icon-192.png",
+    badge: "icon-192.png"
+  };
+  self.registration.showNotification(title, options);
+});
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
