@@ -329,6 +329,42 @@ select {
     display: flex; align-items: center; justify-content: center;
 }
 
+/* ===== ADMIN LOGIN — animated dark/light toggle ===== */
+.lamp-toggle {
+    margin-left: auto;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: var(--white);
+    font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .4s ease, background .4s ease, box-shadow .4s ease;
+}
+.lamp-toggle:active { transform: scale(.88) rotate(-8deg); }
+.lamp-toggle.lit {
+    background: #2b2410;
+    box-shadow: 0 0 18px 4px rgba(255, 200, 60, .55);
+}
+
+.admin-gate-card {
+    transition: background-color .55s ease, color .55s ease, border-color .55s ease, box-shadow .55s ease;
+}
+.admin-gate-card.dark-mode {
+    background: #14181c;
+    color: #e8e6df;
+    border-color: #2a2f35;
+    box-shadow: 0 0 30px rgba(255, 200, 60, .12);
+}
+.admin-gate-card.dark-mode .input-group label { color: #9aa3ac; }
+.admin-gate-card.dark-mode input,
+.admin-gate-card.dark-mode select {
+    background: #1d2227;
+    border-color: #333a41;
+    color: #e8e6df;
+    transition: background-color .55s ease, border-color .55s ease, color .55s ease;
+}
+.admin-gate-card.dark-mode .message { color: #e8e6df; }
+
 /* ===== VERIFY ROW ===== */
 
 .verify-row { display: flex; gap: 8px; }
@@ -1467,8 +1503,9 @@ async function enablePushNotifications() {
         <div class="top-header">
             <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
             <div><h2>Admin</h2><p>Department login required</p></div>
+            <button class="lamp-toggle" onclick="toggleAdminTheme()" title="Toggle theme" aria-label="Toggle theme">💡</button>
         </div>
-        <div class="card">
+        <div class="card admin-gate-card" id="adminGateCard">
             <div id="adminGateMessage" class="message"></div>
             <div class="input-group">
                 <label for="adminDept">Department</label>
@@ -3084,6 +3121,21 @@ function openAdminGate() {
     adminSession = null;
     clearMessage("adminGateMessage");
     showPage("adminGatePage");
+
+    const card = document.getElementById("adminGateCard");
+    const lamp = document.querySelector("#adminGatePage .lamp-toggle");
+    const isDark = localStorage.getItem("udoy_admin_dark") === "1";
+    if (card) card.classList.toggle("dark-mode", isDark);
+    if (lamp) lamp.classList.toggle("lit", isDark);
+}
+
+function toggleAdminTheme() {
+    const card = document.getElementById("adminGateCard");
+    const lamp = document.querySelector("#adminGatePage .lamp-toggle");
+    const nowDark = !card.classList.contains("dark-mode");
+    card.classList.toggle("dark-mode", nowDark);
+    if (lamp) lamp.classList.toggle("lit", nowDark);
+    localStorage.setItem("udoy_admin_dark", nowDark ? "1" : "0");
 }
 
 async function doAdminLogin() {
