@@ -94,10 +94,10 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 
 @media (prefers-reduced-motion: no-preference) {
-    .page.active { animation: fadeUp .38s ease both; }
+    .page.active { animation: fadeUp .36s cubic-bezier(.22,1,.36,1) both; }
     @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateY(14px) scale(.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
     }
 }
 
@@ -279,21 +279,23 @@ select {
     font-family: var(--font-display);
     font-weight: 600; font-size: 15px;
     border: none;
-    transition: transform .12s ease, filter .12s ease;
+    transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
 }
 
 .primary-btn {
     background: var(--green);
     color: var(--paper);
+    box-shadow: 0 4px 0 var(--green-deep);
 }
-.primary-btn:active { transform: scale(.97); filter: brightness(.95); }
+.primary-btn:active { transform: translateY(3px); filter: brightness(.95); box-shadow: 0 1px 0 var(--green-deep); }
 
 .secondary-btn {
     background: var(--paper-dim);
     color: var(--green-deep);
     border: 1.5px dashed var(--gold-deep);
+    box-shadow: 0 3px 0 var(--line);
 }
-.secondary-btn:active { transform: scale(.97); }
+.secondary-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
 
 .google-btn {
     width: 100%; min-height: 50px;
@@ -362,15 +364,18 @@ select {
 }
 
 /* ===== GLOBAL DARK MODE TOGGLE ===== */
+.dashboard-header-right {
+    display: flex; align-items: center; gap: 10px;
+}
 .lamp-toggle {
-    margin-left: auto;
-    width: 42px; height: 42px;
+    width: 38px; height: 38px;
     border-radius: 50%;
     border: 1.5px solid var(--line);
     background: var(--white);
-    font-size: 19px;
+    font-size: 17px;
     display: flex; align-items: center; justify-content: center;
     transition: transform .4s ease, background .4s ease, box-shadow .4s ease;
+    flex-shrink: 0;
 }
 .lamp-toggle:active { transform: scale(.88) rotate(-8deg); }
 body.dark-mode .lamp-toggle {
@@ -562,7 +567,20 @@ body.dark-mode .theme-switch-knob {
 .crop-btn-row button { flex: 1; }
 
 .welcome-card h2 { font-family: var(--font-display); margin: 4px 0 2px; font-size: 19px; }
-.welcome-card p:last-child { color: rgba(251,246,236,.7); font-size: 12.5px; }
+#dashboardUsername { color: rgba(251,246,236,.7); font-size: 12.5px; }
+
+.member-id-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(232,163,61,.16);
+    border: 1px solid rgba(232,163,61,.4);
+    color: var(--gold);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .05em;
+}
 
 .feature-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
@@ -703,19 +721,28 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .sector-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
     margin-top: 18px;
 }
 .sector-card {
     background: var(--white);
     border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 20px 16px;
+    padding: 18px 16px;
     text-align: left;
-    transition: transform .12s ease;
+    box-shadow: 0 3px 0 var(--line);
+    transition: transform .12s ease, box-shadow .12s ease;
 }
-.sector-card:active { transform: scale(.96); }
-.sector-card .icon { font-size: 26px; margin-bottom: 10px; }
+.sector-card:active {
+    transform: translateY(3px) scale(.98);
+    box-shadow: 0 1px 0 var(--line);
+}
+.sector-card .icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: var(--paper-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px; margin-bottom: 12px;
+}
 .sector-card h3 { font-family: var(--font-display); font-size: 15.5px; color: var(--green-deep); }
 .sector-card p { color: var(--sage); font-size: 11.5px; margin-top: 4px; line-height: 1.4; }
 
@@ -1102,7 +1129,10 @@ async function enablePushNotifications() {
             <button class="icon-circle-btn" onclick="toggleSettingsMenu()" aria-label="Settings">
                 <span id="settingsAvatar">U</span>
             </button>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <div class="dashboard-header-right">
+                <button class="lamp-toggle" onclick="toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">💡</button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
         </div>
 
         <div id="settingsMenu" class="settings-menu hidden">
@@ -1117,7 +1147,8 @@ async function enablePushNotifications() {
             <div>
                 <p class="small-text">Welcome back</p>
                 <h2 id="dashboardName">User</h2>
-                <p id="dashboardUsername">@username · <span id="dashboardMemberId">UDOY-000</span></p>
+                <p id="dashboardUsername">@username</p>
+                <span class="member-id-badge" id="dashboardMemberId">UDOY-000</span>
             </div>
         </div>
 
@@ -1563,7 +1594,6 @@ async function enablePushNotifications() {
         <div class="top-header">
             <button class="back-btn" onclick="showPage('homePage')" aria-label="Back">‹</button>
             <div><h2>Admin</h2><p>Department login required</p></div>
-            <button class="lamp-toggle" onclick="toggleDarkMode()" title="Toggle theme" aria-label="Toggle theme">💡</button>
         </div>
         <div class="card admin-gate-card" id="adminGateCard">
             <div id="adminGateMessage" class="message"></div>
