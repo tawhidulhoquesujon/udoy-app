@@ -473,6 +473,51 @@ body.dark-mode .theme-switch-knob {
     position: relative;
     z-index: 1;
 }
+
+/* ===== HEADLINE TICKER (scrolling news-style strip) ===== */
+.headline-ticker {
+    display: flex;
+    align-items: center;
+    background: var(--green-deep);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0 0 16px;
+    height: 38px;
+}
+.headline-ticker.hidden { display: none; }
+.headline-ticker-label {
+    flex-shrink: 0;
+    background: var(--rust);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+.headline-ticker-track {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: tickerScroll 22s linear infinite;
+    padding-left: 100%;
+}
+.headline-ticker-track span {
+    color: var(--paper);
+    font-size: 13px;
+    margin-right: 48px;
+}
+@media (prefers-reduced-motion: reduce) {
+    .headline-ticker-track { animation: none; padding-left: 12px; }
+}
+@keyframes tickerScroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+}
 .dashboard-header .eyebrow {
     font-family: var(--font-mono); font-size: 10.5px;
     letter-spacing: .14em; text-transform: uppercase; color: var(--rust);
@@ -1115,6 +1160,23 @@ async function enablePushNotifications() {
                 <button type="submit" class="primary-btn">Send reset code</button>
             </form>
 
+            <form id="forgotResetForm" class="hidden">
+                <div class="input-group">
+                    <label for="forgotCode">Verification code</label>
+                    <input type="text" id="forgotCode" placeholder="6-digit code from your Gmail" required>
+                </div>
+                <div class="input-group">
+                    <label for="forgotNewPassword">New password</label>
+                    <input type="password" id="forgotNewPassword" placeholder="At least 8 characters" required>
+                </div>
+                <div class="input-group">
+                    <label for="forgotConfirmPassword">Confirm new password</label>
+                    <input type="password" id="forgotConfirmPassword" placeholder="Re-enter new password" required>
+                </div>
+                <button type="submit" class="primary-btn">Reset password</button>
+                <button type="button" class="secondary-btn" style="margin-top:8px;" onclick="resendForgotCode()">Resend code</button>
+            </form>
+
         </div>
 
     </section>
@@ -1141,6 +1203,11 @@ async function enablePushNotifications() {
         </div>
 
         <img src="logo.png" alt="UDOY logo" class="home-logo-strip">
+
+        <div id="headlineTicker" class="headline-ticker hidden">
+            <span class="headline-ticker-label">📰 LIVE</span>
+            <div class="headline-ticker-track" id="headlineTickerTrack"></div>
+        </div>
 
         <div class="welcome-card">
             <div class="profile-circle" id="profileInitial">U</div>
@@ -1640,6 +1707,18 @@ async function enablePushNotifications() {
         </div>
 
         <div class="card" style="margin-top:14px;">
+            <div id="hrHeadlineMessage" class="message"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">📰 Headlines (scrolling ticker on Home page)</h3>
+            <div class="input-group">
+                <input type="text" id="hrHeadlineText" placeholder="Short headline text">
+            </div>
+            <button class="primary-btn" onclick="hrPostHeadline()">Post Headline</button>
+            <div class="stitch small"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Existing headlines</h3>
+            <div id="hrHeadlineList"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">UDOY Policy</h3>
             <div id="hrPolicyMessage" class="message"></div>
             <div class="input-group">
@@ -2007,10 +2086,14 @@ let _isPopState = false;
 /* Pages that make sense to restore to after a refresh, while logged in
    as a member. Auth pages (login/signup) and admin panels (whose
    session is never persisted) are deliberately excluded. */
-const RESTORABLE_MEMBER_PAGES = [
-    "homePage", "memberMenuPage", "profilePage", "settingsPage",
-    "noticeBoardPage", "messageBoxPage", "aiAssistantPage", "reportPage",
-    "paymentPage", "policyPage", "registrationFormPage"
+/* Pages that should NOT be restored after a refresh — auth pages
+   (login/signup) and admin panels, since admin sessions are never
+   persisted to storage (security reasons, unlike member sessions).
+   Every other page is restorable automatically, including any
+   new page added later — no list to keep updating. */
+const NON_RESTORABLE_PAGES = [
+    "loginPage", "signupPage", "forgotPage", "completeProfilePage",
+    "adminGatePage", "adminHRPage", "adminFDPage", "adminRRPage"
 ];
 
 function showPage(pageId) {
@@ -2018,7 +2101,7 @@ function showPage(pageId) {
     const page = document.getElementById(pageId);
     if (page) page.classList.add("active");
 
-    if (currentUser && RESTORABLE_MEMBER_PAGES.indexOf(pageId) !== -1) {
+    if (currentUser && NON_RESTORABLE_PAGES.indexOf(pageId) === -1) {
         localStorage.setItem("udoy_last_page", pageId);
     }
 
@@ -2097,7 +2180,14 @@ function dismissIosBanner() {
 
 function showLogin() { showPage("loginPage"); }
 function showSignup() { showPage("signupPage"); }
-function showForgot() { showPage("forgotPage"); }
+function showForgot() {
+    showPage("forgotPage");
+    clearMessage("forgotMessage");
+    const form = document.getElementById("forgotForm");
+    const resetForm = document.getElementById("forgotResetForm");
+    if (form) { form.classList.remove("hidden"); form.reset(); }
+    if (resetForm) { resetForm.classList.add("hidden"); resetForm.reset(); }
+}
 
 /* ===== PASSWORD ===== */
 function togglePassword(inputId, button) {
@@ -2360,16 +2450,76 @@ function setupCompleteProfile() {
 }
 
 /* ===== FORGOT PASSWORD ===== */
+let forgotEmailInFlow = "";
+
 function setupForgotPassword() {
     const form = document.getElementById("forgotForm");
-    if (!form) return;
+    const resetForm = document.getElementById("forgotResetForm");
+    if (!form || !resetForm) return;
 
-    form.addEventListener("submit", function(event) {
+    form.addEventListener("submit", async function(event) {
         event.preventDefault();
         const email = getValue("forgotEmail");
         if (!email) return showMessage("forgotMessage", "Please enter your Gmail.", "error");
-        showMessage("forgotMessage", "Password recovery will be connected to the backend.", "success");
+
+        showLoading();
+        try {
+            const result = await callBackend("sendPasswordResetCode", { email: email });
+            hideLoading();
+            if (result.success) {
+                forgotEmailInFlow = email;
+                form.classList.add("hidden");
+                resetForm.classList.remove("hidden");
+                showMessage("forgotMessage", "A verification code was sent to your Gmail.", "success");
+            } else {
+                showMessage("forgotMessage", result.message, "error");
+            }
+        } catch (err) {
+            hideLoading();
+            showMessage("forgotMessage", "Network error. Please try again.", "error");
+        }
     });
+
+    resetForm.addEventListener("submit", async function(event) {
+        event.preventDefault();
+        const code = getValue("forgotCode");
+        const newPassword = getValue("forgotNewPassword");
+        const confirmPassword = getValue("forgotConfirmPassword");
+
+        if (!code) return showMessage("forgotMessage", "Please enter the verification code.", "error");
+        if (newPassword.length < 8) return showMessage("forgotMessage", "New password must be at least 8 characters.", "error");
+        if (newPassword !== confirmPassword) return showMessage("forgotMessage", "Passwords do not match.", "error");
+
+        showLoading();
+        try {
+            const result = await callBackend("resetPassword", { email: forgotEmailInFlow, code: code, newPassword: newPassword });
+            hideLoading();
+            showMessage("forgotMessage", result.message, result.success ? "success" : "error");
+            if (result.success) {
+                resetForm.reset();
+                resetForm.classList.add("hidden");
+                form.classList.remove("hidden");
+                form.reset();
+                setTimeout(showLogin, 1500);
+            }
+        } catch (err) {
+            hideLoading();
+            showMessage("forgotMessage", "Network error. Please try again.", "error");
+        }
+    });
+}
+
+async function resendForgotCode() {
+    if (!forgotEmailInFlow) return;
+    showLoading();
+    try {
+        const result = await callBackend("sendPasswordResetCode", { email: forgotEmailInFlow });
+        hideLoading();
+        showMessage("forgotMessage", result.success ? "A new code was sent to your Gmail." : result.message, result.success ? "success" : "error");
+    } catch (err) {
+        hideLoading();
+        showMessage("forgotMessage", "Network error. Please try again.", "error");
+    }
 }
 
 /* ===== GET INPUT VALUE ===== */
@@ -2393,6 +2543,24 @@ function openDashboard(user) {
     showPage("homePage");
     refreshCurrentUser(); // quietly pull the latest data in case an admin changed something
     enablePushNotifications();
+    loadHeadlineTicker();
+}
+
+async function loadHeadlineTicker() {
+    const ticker = document.getElementById("headlineTicker");
+    const track = document.getElementById("headlineTickerTrack");
+    if (!ticker || !track) return;
+    try {
+        const result = await callBackend("getHeadlines", {});
+        if (result.success && result.headlines.length > 0) {
+            track.innerHTML = result.headlines.map(h => "<span>" + escapeHtml(h.text) + "</span>").join("");
+            ticker.classList.remove("hidden");
+        } else {
+            ticker.classList.add("hidden");
+        }
+    } catch (err) {
+        ticker.classList.add("hidden");
+    }
 }
 
 function updateAvatarElements(user) {
@@ -3235,7 +3403,7 @@ async function doAdminLogin() {
         hideLoading();
         if (result.success) {
             adminSession = { dept: dept, username: username, password: password };
-            if (dept === "HR") { showPage("adminHRPage"); loadHrNotices(); loadHrPolicies(); }
+            if (dept === "HR") { showPage("adminHRPage"); loadHrNotices(); loadHrPolicies(); loadHrHeadlines(); }
             else if (dept === "FD") { showPage("adminFDPage"); initFdPanel(); }
             else { showPage("adminRRPage"); loadRrReportsAndMembers(); }
         } else {
@@ -3283,6 +3451,46 @@ async function hrDeleteNotice(id) {
     hideLoading();
     showMessage("hrMessage", result.message, result.success ? "success" : "error");
     if (result.success) loadHrNotices();
+}
+
+/* ===== ADMIN: HR — Headlines (scrolling ticker) ===== */
+async function loadHrHeadlines() {
+    const list = document.getElementById("hrHeadlineList");
+    if (!list) return;
+    list.innerHTML = '<p class="policy-empty">Loading…</p>';
+    const result = await callBackend("getHeadlines", {});
+    if (result.success) {
+        list.innerHTML = "";
+        if (result.headlines.length === 0) {
+            list.innerHTML = '<p class="policy-empty">No headlines yet.</p>';
+        }
+        result.headlines.forEach(h => {
+            list.innerHTML += '<div class="list-item"><p>' + escapeHtml(h.text) + '</p>' +
+                '<p class="meta">' + formatDate(h.timestamp) + '</p>' +
+                '<div class="row-actions"><button class="btn-delete" onclick="hrDeleteHeadline(\'' + h.id + '\')">Delete</button></div></div>';
+        });
+    }
+}
+async function hrPostHeadline() {
+    if (!adminSession) return;
+    const text = getValue("hrHeadlineText");
+    if (!text) return showMessage("hrHeadlineMessage", "Please write a headline.", "error");
+    showLoading();
+    const result = await callBackend("addHeadline", { admin: adminSession, text: text });
+    hideLoading();
+    showMessage("hrHeadlineMessage", result.message, result.success ? "success" : "error");
+    if (result.success) {
+        document.getElementById("hrHeadlineText").value = "";
+        loadHrHeadlines();
+    }
+}
+async function hrDeleteHeadline(id) {
+    if (!adminSession) return;
+    showLoading();
+    const result = await callBackend("deleteHeadline", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("hrHeadlineMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadHrHeadlines();
 }
 
 /* ===== ADMIN: HR — UDOY Policy ===== */
@@ -4000,7 +4208,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 // refresh, using the same "opener" each page normally
                 // uses so its data loads correctly (not just a blank shell).
                 const lastPage = localStorage.getItem("udoy_last_page");
-                if (lastPage && lastPage !== "homePage" && RESTORABLE_MEMBER_PAGES.indexOf(lastPage) !== -1) {
+                if (lastPage && lastPage !== "homePage" &&
+                    NON_RESTORABLE_PAGES.indexOf(lastPage) === -1 &&
+                    document.getElementById(lastPage)) {
                     switch (lastPage) {
                         case "profilePage": goToProfile(); break;
                         case "noticeBoardPage": openNoticeBoard(); break;
