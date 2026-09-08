@@ -3826,6 +3826,7 @@ async function loadFdPayments() {
     });
 }
 async function fdSetStatus(id, status) {
+    if (status === "Rejected" && !confirm("Reject this payment? It will be permanently removed.")) return;
     showLoading("পেমেন্ট তালিকা লোড হচ্ছে…");
     const result = await callBackend("verifyPayment", { admin: adminSession, id: id, status: status });
     hideLoading();
