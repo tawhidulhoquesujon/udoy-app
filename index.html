@@ -698,6 +698,21 @@ body.dark-mode .theme-switch-knob {
     margin-top: 14px; font-family: var(--font-mono);
     font-size: 11.5px; letter-spacing: .06em; color: var(--sage);
 }
+#loadingText {
+    font-family: var(--font-display);
+    font-size: 15px; font-weight: 600; letter-spacing: 0;
+    color: var(--green-deep);
+    text-align: center;
+    padding: 0 24px;
+}
+.loading-subtext {
+    margin-top: 6px !important;
+    font-size: 11px !important;
+    color: var(--sage);
+    text-align: center;
+    padding: 0 24px;
+}
+.loading-subtext.hidden { display: none; }
 .loader {
     width: 40px; height: 40px;
     border: 3px solid var(--line);
@@ -2006,6 +2021,9 @@ async function enablePushNotifications() {
         </div>
         <div class="card">
             <div id="rrMessage" class="message"></div>
+            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Submitted Registrations (PDF)</h3>
+            <div id="rrRegistrationList"></div>
+            <div class="stitch small"></div>
             <h3 style="font-family:var(--font-display);margin-bottom:10px;">Reports</h3>
             <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportReportsCSV()">⬇️ Export CSV</button>
             <div id="rrReportList"></div>
@@ -2035,7 +2053,8 @@ async function enablePushNotifications() {
 
 <div id="loading" class="loading hidden">
     <div class="loader"></div>
-    <p>PLEASE WAIT</p>
+    <p id="loadingText">PLEASE WAIT</p>
+    <p id="loadingSubtext" class="loading-subtext hidden"></p>
 </div>
 
 <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;">
@@ -2203,7 +2222,18 @@ function togglePassword(inputId, button) {
 }
 
 /* ===== LOADING ===== */
-function showLoading() { document.getElementById("loading")?.classList.remove("hidden"); }
+function showLoading(message, subtext) {
+    const el = document.getElementById("loading");
+    if (!el) return;
+    const textEl = document.getElementById("loadingText");
+    const subEl = document.getElementById("loadingSubtext");
+    if (textEl) textEl.textContent = message || "PLEASE WAIT";
+    if (subEl) {
+        if (subtext) { subEl.textContent = subtext; subEl.classList.remove("hidden"); }
+        else { subEl.textContent = ""; subEl.classList.add("hidden"); }
+    }
+    el.classList.remove("hidden");
+}
 function hideLoading() { document.getElementById("loading")?.classList.add("hidden"); }
 
 /* ===== MESSAGE ===== */
@@ -2244,7 +2274,7 @@ async function sendVerificationCode() {
     if (!email) return showMessage("signupMessage", "Please enter your Gmail address.", "error");
     if (!email.toLowerCase().endsWith("@gmail.com")) return showMessage("signupMessage", "Please use a Gmail address.", "error");
 
-    showLoading();
+    showLoading("কোড পাঠানো হচ্ছে…");
     try {
         const result = await callBackend("sendVerificationCode", { email: email });
         hideLoading();
@@ -2270,7 +2300,7 @@ async function verifyEmail() {
 
     if (!code) return showMessage("signupMessage", "Enter the verification code.", "error");
 
-    showLoading();
+    showLoading("যাচাই করা হচ্ছে…");
     try {
         const result = await callBackend("verifyEmailCode", { email: email, code: code });
         hideLoading();
@@ -2314,7 +2344,7 @@ function setupSignup() {
             region: getValue("region"), country: getValue("country"), password: password
         };
 
-        showLoading();
+        showLoading("অ্যাকাউন্ট তৈরি করা হচ্ছে…");
         try {
             const result = await callBackend("registerUser", { user: user });
             hideLoading();
@@ -2346,7 +2376,7 @@ function setupLogin() {
 
         if (!username || !password) { alert("Enter username and password."); return; }
 
-        showLoading();
+        showLoading("লগইন করা হচ্ছে…");
         try {
             const result = await callBackend("loginUser", { username: username, password: password });
             hideLoading();
@@ -2371,7 +2401,7 @@ let googleUserPending = null; // holds { name, email } while completing profile
 
 async function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    showLoading();
+    showLoading("Google দিয়ে লগইন করা হচ্ছে…");
     try {
         const result = await firebase.auth().signInWithPopup(provider);
         const gUser = result.user;
@@ -2430,7 +2460,7 @@ function setupCompleteProfile() {
             country: getValue("gpCountry")
         };
 
-        showLoading();
+        showLoading("প্রোফাইল সম্পন্ন করা হচ্ছে…");
         try {
             const result = await callBackend("completeGoogleRegistration", payload);
             hideLoading();
@@ -2462,7 +2492,7 @@ function setupForgotPassword() {
         const email = getValue("forgotEmail");
         if (!email) return showMessage("forgotMessage", "Please enter your Gmail.", "error");
 
-        showLoading();
+        showLoading("কোড পাঠানো হচ্ছে…");
         try {
             const result = await callBackend("sendPasswordResetCode", { email: email });
             hideLoading();
@@ -2490,7 +2520,7 @@ function setupForgotPassword() {
         if (newPassword.length < 8) return showMessage("forgotMessage", "New password must be at least 8 characters.", "error");
         if (newPassword !== confirmPassword) return showMessage("forgotMessage", "Passwords do not match.", "error");
 
-        showLoading();
+        showLoading("পাসওয়ার্ড পরিবর্তন করা হচ্ছে…");
         try {
             const result = await callBackend("resetPassword", { email: forgotEmailInFlow, code: code, newPassword: newPassword });
             hideLoading();
@@ -2511,7 +2541,7 @@ function setupForgotPassword() {
 
 async function resendForgotCode() {
     if (!forgotEmailInFlow) return;
-    showLoading();
+    showLoading("নতুন কোড পাঠানো হচ্ছে…");
     try {
         const result = await callBackend("sendPasswordResetCode", { email: forgotEmailInFlow });
         hideLoading();
@@ -2679,7 +2709,7 @@ async function saveProfileEdits() {
         return showMessage("profileEditMessage", "Please fill in all fields.", "error");
     }
 
-    showLoading();
+    showLoading("প্রোফাইল আপডেট করা হচ্ছে…");
     try {
         const result = await callBackend("updateProfileDetails", {
             username: currentUser.username, name: name, mobile: mobile, region: religion
@@ -2821,7 +2851,7 @@ async function saveCroppedPhoto() {
     const dataUrl = outputCanvas.toDataURL("image/jpeg", 0.85);
     const base64 = dataUrl.split(",")[1];
 
-    showLoading();
+    showLoading("ছবি আপলোড হচ্ছে…");
     try {
         const result = await callBackend("updateProfilePhoto", {
             username: currentUser.username,
@@ -3020,7 +3050,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 fileData: { base64: regPhotoBase64, mimeType: regPhotoMimeType }
             };
 
-            showLoading();
+            showLoading("📄 আপনার PDF তৈরি করা হচ্ছে…", "একটু সময় লাগতে পারে, দয়া করে অপেক্ষা করুন");
             try {
                 const result = await callBackend("submitRegistration", payload);
                 hideLoading();
@@ -3084,7 +3114,7 @@ function setupPayment() {
             transactionId: transactionId,
             month: getValue("payMonth")
         };
-        showLoading();
+        showLoading("পেমেন্ট জমা দেওয়া হচ্ছে…");
         try {
             const result = await callBackend("submitPayment", { payment: payment });
             hideLoading();
@@ -3105,7 +3135,7 @@ async function doCheckId() {
     const resultBox = document.getElementById("checkIdResult");
     if (!query) return showMessage("checkIdMessage", "Enter a Member ID or username.", "error");
 
-    showLoading();
+    showLoading("খোঁজা হচ্ছে…");
     try {
         const result = await callBackend("checkId", { query: query });
         hideLoading();
@@ -3344,7 +3374,7 @@ function setupReport() {
             subject: getValue("reportSubject"),
             description: getValue("reportDescription")
         };
-        showLoading();
+        showLoading("রিপোর্ট পাঠানো হচ্ছে…");
         try {
             const result = await callBackend("submitReport", { report: report });
             hideLoading();
@@ -3368,7 +3398,7 @@ function setupChangePassword() {
         if (!currentUser) return;
         const oldPassword = getValue("oldPassword");
         const newPassword = getValue("newPassword");
-        showLoading();
+        showLoading("পাসওয়ার্ড পরিবর্তন করা হচ্ছে…");
         try {
             const result = await callBackend("changePassword", { username: currentUser.username, oldPassword: oldPassword, newPassword: newPassword });
             hideLoading();
@@ -3397,7 +3427,7 @@ async function doAdminLogin() {
     const username = getValue("adminUsername");
     const password = getValue("adminPassword");
 
-    showLoading();
+    showLoading("লগইন করা হচ্ছে…");
     try {
         const result = await callBackend("adminLogin", { dept: dept, username: username, password: password });
         hideLoading();
@@ -3434,7 +3464,7 @@ async function hrPostNotice() {
     const title = getValue("hrNoticeTitle");
     const content = getValue("hrNoticeContent");
     if (!title || !content) return showMessage("hrMessage", "Fill in both title and content.", "error");
-    showLoading();
+    showLoading("নোটিস পোস্ট করা হচ্ছে…");
     const result = await callBackend("addNotice", { admin: adminSession, title: title, content: content });
     hideLoading();
     showMessage("hrMessage", result.message, result.success ? "success" : "error");
@@ -3446,7 +3476,7 @@ async function hrPostNotice() {
 }
 async function hrDeleteNotice(id) {
     if (!adminSession) return;
-    showLoading();
+    showLoading("নোটিস মুছে ফেলা হচ্ছে…");
     const result = await callBackend("deleteNotice", { admin: adminSession, id: id });
     hideLoading();
     showMessage("hrMessage", result.message, result.success ? "success" : "error");
@@ -3475,7 +3505,7 @@ async function hrPostHeadline() {
     if (!adminSession) return;
     const text = getValue("hrHeadlineText");
     if (!text) return showMessage("hrHeadlineMessage", "Please write a headline.", "error");
-    showLoading();
+    showLoading("হেডলাইন পোস্ট করা হচ্ছে…");
     const result = await callBackend("addHeadline", { admin: adminSession, text: text });
     hideLoading();
     showMessage("hrHeadlineMessage", result.message, result.success ? "success" : "error");
@@ -3486,7 +3516,7 @@ async function hrPostHeadline() {
 }
 async function hrDeleteHeadline(id) {
     if (!adminSession) return;
-    showLoading();
+    showLoading("হেডলাইন মুছে ফেলা হচ্ছে…");
     const result = await callBackend("deleteHeadline", { admin: adminSession, id: id });
     hideLoading();
     showMessage("hrHeadlineMessage", result.message, result.success ? "success" : "error");
@@ -3524,7 +3554,7 @@ function hrUploadPolicy() {
     const reader = new FileReader();
     reader.onload = async function(evt) {
         const fileData = { base64: evt.target.result.split(",")[1], mimeType: file.type || "application/pdf" };
-        showLoading();
+        showLoading("পলিসি আপলোড হচ্ছে…");
         const result = await callBackend("addPolicy", { admin: adminSession, policy: { title: title, language: language }, fileData: fileData });
         hideLoading();
         showMessage("hrPolicyMessage", result.message, result.success ? "success" : "error");
@@ -3539,7 +3569,7 @@ function hrUploadPolicy() {
 
 async function hrDeletePolicy(id) {
     if (!adminSession) return;
-    showLoading();
+    showLoading("পলিসি মুছে ফেলা হচ্ছে…");
     const result = await callBackend("deletePolicy", { admin: adminSession, id: id });
     hideLoading();
     showMessage("hrPolicyMessage", result.message, result.success ? "success" : "error");
@@ -3627,7 +3657,7 @@ async function fdAddFund() {
         source: getValue("fundSource"), purpose: getValue("fundPurpose")
     };
     if (!fund.name) return showMessage("fdMessage", "Fund name is required.", "error");
-    showLoading();
+    showLoading("ফান্ড যোগ করা হচ্ছে…");
     const result = await callBackend("addFund", { admin: adminSession, fund: fund });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3640,7 +3670,7 @@ async function fdAddFund() {
 }
 async function fdDeleteFund(id) {
     if (!confirm("Delete this fund/account? Existing income/expense entries linked to it will remain but show as unlinked.")) return;
-    showLoading();
+    showLoading("ফান্ড মুছে ফেলা হচ্ছে…");
     const result = await callBackend("deleteFund", { admin: adminSession, id: id });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3683,7 +3713,7 @@ async function fdAddIncome() {
     };
     if (!income.amount || !income.fundId) return showMessage("fdMessage", "Amount and fund are required.", "error");
 
-    showLoading();
+    showLoading("আয় যোগ করা হচ্ছে…");
     readReceiptAsBase64("incReceipt", async function(fileData) {
         const result = await callBackend("addIncome", { admin: adminSession, income: income, fileData: fileData });
         hideLoading();
@@ -3696,7 +3726,7 @@ async function fdAddIncome() {
     });
 }
 async function fdDeleteIncome(id) {
-    showLoading();
+    showLoading("আয় যোগ করা হচ্ছে…");
     const result = await callBackend("deleteIncome", { admin: adminSession, id: id });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3728,7 +3758,7 @@ async function fdAddExpense() {
     };
     if (!expense.amount || !expense.fundId) return showMessage("fdMessage", "Amount and fund are required.", "error");
 
-    showLoading();
+    showLoading("খরচ যোগ করা হচ্ছে…");
     readReceiptAsBase64("expReceipt", async function(fileData) {
         const result = await callBackend("addExpense", { admin: adminSession, expense: expense, fileData: fileData });
         hideLoading();
@@ -3741,7 +3771,7 @@ async function fdAddExpense() {
     });
 }
 async function fdDeleteExpense(id) {
-    showLoading();
+    showLoading("খরচ যোগ করা হচ্ছে…");
     const result = await callBackend("deleteExpense", { admin: adminSession, id: id });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3768,7 +3798,7 @@ async function loadFdPayments() {
     });
 }
 async function fdSetStatus(id, status) {
-    showLoading();
+    showLoading("পেমেন্ট তালিকা লোড হচ্ছে…");
     const result = await callBackend("verifyPayment", { admin: adminSession, id: id, status: status });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3823,7 +3853,7 @@ async function loadAssetList() {
 async function changeAssetStatus(assetId, status) {
     const details = prompt("Optional note for this status change (e.g. transferred to, repair details):", "");
     if (details === null) return;
-    showLoading();
+    showLoading("স্ট্যাটাস আপডেট করা হচ্ছে…");
     const result = await callBackend("updateAssetStatus", { admin: adminSession, assetId: assetId, status: status, details: details });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3849,7 +3879,7 @@ async function submitAsset() {
         location: getValue("assetLocation"), status: document.getElementById("assetStatus").value
     };
     if (!asset.name) return showMessage("fdMessage", "Asset name is required.", "error");
-    showLoading();
+    showLoading("সম্পদ যোগ করা হচ্ছে…");
     const result = await callBackend("addAsset", { admin: adminSession, asset: asset });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3859,7 +3889,7 @@ async function submitAsset() {
     }
 }
 async function deleteAssetEntry(id) {
-    showLoading();
+    showLoading("সম্পদ যোগ করা হচ্ছে…");
     const result = await callBackend("deleteAsset", { admin: adminSession, id: id });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3929,7 +3959,7 @@ async function submitStockItem() {
         openingQty: getValue("stockOpeningQty"), lowStockThreshold: getValue("stockLowThreshold")
     };
     if (!item.name) return showMessage("fdMessage", "Item name is required.", "error");
-    showLoading();
+    showLoading("স্টক আইটেম যোগ করা হচ্ছে…");
     const result = await callBackend("addStockItem", { admin: adminSession, item: item });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3944,7 +3974,7 @@ async function submitStockTxn() {
     const qty = getValue("stockTxnQty");
     const note = getValue("stockTxnNote");
     if (!itemId || !qty) return showMessage("fdMessage", "Select an item and enter quantity.", "error");
-    showLoading();
+    showLoading("স্টক লেনদেন সংরক্ষণ করা হচ্ছে…");
     const result = await callBackend(STOCK_TXN_ACTIONS[type], { admin: adminSession, itemId: itemId, quantity: qty, note: note });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3955,7 +3985,7 @@ async function submitStockTxn() {
     }
 }
 async function deleteStockItemEntry(id) {
-    showLoading();
+    showLoading("স্টক লেনদেন সংরক্ষণ করা হচ্ছে…");
     const result = await callBackend("deleteStockItem", { admin: adminSession, id: id });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -3997,7 +4027,7 @@ async function recordAdvanceTxn(advanceId, type) {
     const amount = Number(amountStr);
     if (!amount || amount <= 0) { alert("Enter a valid amount."); return; }
     const note = prompt("Optional note:", "") || "";
-    showLoading();
+    showLoading("লেনদেন সংরক্ষণ করা হচ্ছে…");
     const result = await callBackend("addAdvanceTransaction", { admin: adminSession, advanceId: advanceId, type: type, amount: amount, note: note });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -4022,7 +4052,7 @@ async function submitAdvance() {
         amount: getValue("advanceAmount"), date: getValue("advanceDate")
     };
     if (!advance.personName || !advance.amount) return showMessage("fdMessage", "Name and amount are required.", "error");
-    showLoading();
+    showLoading("অগ্রিম যোগ করা হচ্ছে…");
     const result = await callBackend("addAdvance", { admin: adminSession, advance: advance });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -4032,14 +4062,14 @@ async function submitAdvance() {
     }
 }
 async function setAdvanceStatus(id, status) {
-    showLoading();
+    showLoading("অগ্রিম যোগ করা হচ্ছে…");
     const result = await callBackend("updateAdvanceStatus", { admin: adminSession, id: id, status: status });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
     if (result.success) loadAdvanceList();
 }
 async function deleteAdvanceEntry(id) {
-    showLoading();
+    showLoading("স্ট্যাটাস আপডেট করা হচ্ছে…");
     const result = await callBackend("deleteAdvance", { admin: adminSession, id: id });
     hideLoading();
     showMessage("fdMessage", result.message, result.success ? "success" : "error");
@@ -4051,10 +4081,31 @@ async function loadRrReportsAndMembers() {
     const reportList = document.getElementById("rrReportList");
     const memberList = document.getElementById("rrMemberList");
     const adminList = document.getElementById("rrAdminList");
+    const registrationList = document.getElementById("rrRegistrationList");
     clearMessage("rrMessage");
     reportList.innerHTML = '<p class="policy-empty">Loading…</p>';
     memberList.innerHTML = '<p class="policy-empty">Loading…</p>';
     adminList.innerHTML = '<p class="policy-empty">Loading…</p>';
+    registrationList.innerHTML = '<p class="policy-empty">Loading…</p>';
+
+    const registrationResult = await callBackend("getRegistrations", { admin: adminSession });
+    if (registrationResult.success) {
+        registrationList.innerHTML = "";
+        if (registrationResult.registrations.length === 0) {
+            registrationList.innerHTML = '<p class="policy-empty">No registrations yet.</p>';
+        }
+        registrationResult.registrations.forEach(r => {
+            registrationList.innerHTML += '<div class="list-item"><h4>' + r.memberId + ' — ' + escapeHtml(r.nameEN || r.nameBN || "") + '</h4>' +
+                '<p>@' + r.username + '</p>' +
+                '<p class="meta">' + formatDate(r.timestamp) + '</p>' +
+                '<div class="row-actions">' +
+                    (r.pdfUrl ? '<a class="btn-verify" href="' + r.pdfUrl + '" target="_blank" rel="noopener">View PDF</a>' : '') +
+                    '<button class="btn-delete" onclick="rrDeleteRegistration(\'' + r.memberId + '\')">Delete</button>' +
+                '</div></div>';
+        });
+    } else {
+        registrationList.innerHTML = '<p class="policy-empty">Could not load registrations.</p>';
+    }
 
     const reportResult = await callBackend("getReports", { admin: adminSession });
     if (reportResult.success) {
@@ -4112,7 +4163,7 @@ async function rrEditAdmin(dept) {
     if (newPassword === null) return;
     if (!newUsername.trim() && !newPassword.trim()) return;
 
-    showLoading();
+    showLoading("আপডেট করা হচ্ছে…");
     const result = await callBackend("updateAdminCreds", { admin: adminSession, dept: dept, newUsername: newUsername, newPassword: newPassword });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
@@ -4128,7 +4179,7 @@ async function adminChangeOwnPassword(prefix, dept) {
 
     if (!oldPassword || !newPassword) return showMessage(msgId, "Fill in both fields.", "error");
 
-    showLoading();
+    showLoading("পাসওয়ার্ড পরিবর্তন করা হচ্ছে…");
     const result = await callBackend("changeAdminPassword", { dept: dept, username: adminSession.username, oldPassword: oldPassword, newPassword: newPassword });
     hideLoading();
     showMessage(msgId, result.message, result.success ? "success" : "error");
@@ -4147,7 +4198,7 @@ async function rrEditMember(oldUsername, currentMemberId) {
     const newPassword = prompt("New password (leave blank to keep unchanged):", "");
     if (newPassword === null) return;
 
-    showLoading();
+    showLoading("মেম্বার তথ্য আপডেট করা হচ্ছে…");
     const result = await callBackend("updateMember", {
         admin: adminSession, oldUsername: oldUsername,
         newMemberId: newMemberId, newUsername: newUsername, newPassword: newPassword
@@ -4159,7 +4210,7 @@ async function rrEditMember(oldUsername, currentMemberId) {
 
 async function rrDeleteMember(username) {
     if (!confirm("Permanently delete this member's account? This cannot be undone.")) return;
-    showLoading();
+    showLoading("মেম্বার মুছে ফেলা হচ্ছে…");
     const result = await callBackend("deleteMember", { admin: adminSession, username: username });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
@@ -4171,7 +4222,7 @@ async function rrToggleStatus(username, newStatus) {
         ? "Deactivate this account? The member will not be able to log in until reactivated."
         : "Reactivate this account?";
     if (!confirm(confirmMsg)) return;
-    showLoading();
+    showLoading("স্ট্যাটাস পরিবর্তন করা হচ্ছে…");
     const result = await callBackend("setMemberStatus", { admin: adminSession, username: username, status: newStatus });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
@@ -4179,8 +4230,17 @@ async function rrToggleStatus(username, newStatus) {
 }
 
 async function rrDeleteReport(id) {
-    showLoading();
+    showLoading("স্ট্যাটাস পরিবর্তন করা হচ্ছে…");
     const result = await callBackend("deleteReport", { admin: adminSession, id: id });
+    hideLoading();
+    showMessage("rrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadRrReportsAndMembers();
+}
+
+async function rrDeleteRegistration(memberId) {
+    if (!confirm("Permanently delete this registration PDF? This cannot be undone.")) return;
+    showLoading("রেজিস্ট্রেশন মুছে ফেলা হচ্ছে…");
+    const result = await callBackend("deleteRegistration", { admin: adminSession, memberId: memberId });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
     if (result.success) loadRrReportsAndMembers();
