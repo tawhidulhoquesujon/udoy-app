@@ -2033,31 +2033,48 @@ async function enablePushNotifications() {
         </div>
         <div class="card">
             <div id="rrMessage" class="message"></div>
-            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Submitted Registrations (PDF)</h3>
-            <div id="rrRegistrationList"></div>
-            <div class="stitch small"></div>
-            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Reports</h3>
-            <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportReportsCSV()">⬇️ Export CSV</button>
-            <div id="rrReportList"></div>
-            <div class="stitch small"></div>
-            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Member directory</h3>
-            <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportMembersCSV()">⬇️ Export CSV</button>
-            <div id="rrMemberList"></div>
-            <div class="stitch small"></div>
-            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Admin directory</h3>
-            <div id="rrAdminList"></div>
-        </div>
 
-        <div class="card" style="margin-top:14px;">
-            <h3 style="font-family:var(--font-display);margin-bottom:10px;">Change my admin password</h3>
-            <div id="rrPwdMessage" class="message"></div>
-            <div class="input-group">
-                <input type="password" id="rrOldPassword" placeholder="Current password">
+            <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
+                <button class="tab-btn active" id="rrTabRegistrations" onclick="switchRrTab('registrations')">Registrations</button>
+                <button class="tab-btn" id="rrTabReports" onclick="switchRrTab('reports')">Reports</button>
+                <button class="tab-btn" id="rrTabMembers" onclick="switchRrTab('members')">Members</button>
+                <button class="tab-btn" id="rrTabAdmins" onclick="switchRrTab('admins')">Admins</button>
+                <button class="tab-btn" id="rrTabPassword" onclick="switchRrTab('password')">Password</button>
             </div>
-            <div class="input-group">
-                <input type="password" id="rrNewPassword" placeholder="New password">
+
+            <div id="rrPanelRegistrations">
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Submitted Registrations (PDF)</h3>
+                <div id="rrRegistrationList"></div>
             </div>
-            <button class="secondary-btn" onclick="adminChangeOwnPassword('rr','RR')">Update Password</button>
+
+            <div id="rrPanelReports" class="hidden">
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Reports</h3>
+                <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportReportsCSV()">⬇️ Export CSV</button>
+                <div id="rrReportList"></div>
+            </div>
+
+            <div id="rrPanelMembers" class="hidden">
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Member directory</h3>
+                <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportMembersCSV()">⬇️ Export CSV</button>
+                <div id="rrMemberList"></div>
+            </div>
+
+            <div id="rrPanelAdmins" class="hidden">
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Admin directory</h3>
+                <div id="rrAdminList"></div>
+            </div>
+
+            <div id="rrPanelPassword" class="hidden">
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Change my admin password</h3>
+                <div id="rrPwdMessage" class="message"></div>
+                <div class="input-group">
+                    <input type="password" id="rrOldPassword" placeholder="Current password">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="rrNewPassword" placeholder="New password">
+                </div>
+                <button class="secondary-btn" onclick="adminChangeOwnPassword('rr','RR')">Update Password</button>
+            </div>
         </div>
     </section>
 
@@ -3467,7 +3484,7 @@ async function doAdminLogin() {
             adminSession = { dept: dept, username: username, password: password };
             if (dept === "HR") { showPage("adminHRPage"); loadHrNotices(); loadHrPolicies(); loadHrHeadlines(); }
             else if (dept === "FD") { showPage("adminFDPage"); initFdPanel(); }
-            else { showPage("adminRRPage"); loadRrReportsAndMembers(); }
+            else { showPage("adminRRPage"); initRrPanel(); }
         } else {
             showMessage("adminGateMessage", result.message, "error");
         }
@@ -4126,17 +4143,9 @@ async function deleteAdvanceEntry(id) {
 }
 
 /* ===== ADMIN: Report & Registration ===== */
-async function loadRrReportsAndMembers() {
-    const reportList = document.getElementById("rrReportList");
-    const memberList = document.getElementById("rrMemberList");
-    const adminList = document.getElementById("rrAdminList");
+async function loadRrRegistrations() {
     const registrationList = document.getElementById("rrRegistrationList");
-    clearMessage("rrMessage");
-    reportList.innerHTML = '<p class="policy-empty">Loading…</p>';
-    memberList.innerHTML = '<p class="policy-empty">Loading…</p>';
-    adminList.innerHTML = '<p class="policy-empty">Loading…</p>';
     registrationList.innerHTML = '<p class="policy-empty">Loading…</p>';
-
     const registrationResult = await callBackend("getRegistrations", { admin: adminSession });
     if (registrationResult.success) {
         registrationList.innerHTML = "";
@@ -4155,7 +4164,11 @@ async function loadRrReportsAndMembers() {
     } else {
         registrationList.innerHTML = '<p class="policy-empty">Could not load registrations.</p>';
     }
+}
 
+async function loadRrReports() {
+    const reportList = document.getElementById("rrReportList");
+    reportList.innerHTML = '<p class="policy-empty">Loading…</p>';
     const reportResult = await callBackend("getReports", { admin: adminSession });
     if (reportResult.success) {
         _lastReports = reportResult.reports;
@@ -4169,7 +4182,11 @@ async function loadRrReportsAndMembers() {
     } else {
         showMessage("rrMessage", reportResult.message, "error");
     }
+}
 
+async function loadRrMembers() {
+    const memberList = document.getElementById("rrMemberList");
+    memberList.innerHTML = '<p class="policy-empty">Loading…</p>';
     const memberResult = await callBackend("getMembers", { admin: adminSession });
     if (memberResult.success) {
         _lastMembers = memberResult.members;
@@ -4190,7 +4207,11 @@ async function loadRrReportsAndMembers() {
         memberList.innerHTML = '<p class="policy-empty">Could not load members.</p>';
         showMessage("rrMessage", memberResult.message, "error");
     }
+}
 
+async function loadRrAdmins() {
+    const adminList = document.getElementById("rrAdminList");
+    adminList.innerHTML = '<p class="policy-empty">Loading…</p>';
     const adminResult = await callBackend("getAdmins", { admin: adminSession });
     if (adminResult.success) {
         adminList.innerHTML = "";
@@ -4205,6 +4226,22 @@ async function loadRrReportsAndMembers() {
     }
 }
 
+function switchRrTab(tab) {
+    ["registrations","reports","members","admins","password"].forEach(t => {
+        document.getElementById("rrTab" + capitalize(t)).classList.toggle("active", t === tab);
+        document.getElementById("rrPanel" + capitalize(t)).classList.toggle("hidden", t !== tab);
+    });
+    if (tab === "registrations") loadRrRegistrations();
+    if (tab === "reports") loadRrReports();
+    if (tab === "members") loadRrMembers();
+    if (tab === "admins") loadRrAdmins();
+}
+
+function initRrPanel() {
+    clearMessage("rrMessage");
+    switchRrTab("registrations");
+}
+
 async function rrEditAdmin(dept) {
     const newUsername = prompt("New username (leave blank to keep unchanged):", "");
     if (newUsername === null) return;
@@ -4216,7 +4253,7 @@ async function rrEditAdmin(dept) {
     const result = await callBackend("updateAdminCreds", { admin: adminSession, dept: dept, newUsername: newUsername, newPassword: newPassword });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadRrReportsAndMembers();
+    if (result.success) loadRrAdmins();
 }
 
 /* ===== ADMIN: self password change (any department) ===== */
@@ -4254,7 +4291,7 @@ async function rrEditMember(oldUsername, currentMemberId) {
     });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadRrReportsAndMembers();
+    if (result.success) loadRrMembers();
 }
 
 async function rrDeleteMember(username) {
@@ -4263,7 +4300,7 @@ async function rrDeleteMember(username) {
     const result = await callBackend("deleteMember", { admin: adminSession, username: username });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadRrReportsAndMembers();
+    if (result.success) loadRrMembers();
 }
 
 async function rrToggleStatus(username, newStatus) {
@@ -4275,7 +4312,7 @@ async function rrToggleStatus(username, newStatus) {
     const result = await callBackend("setMemberStatus", { admin: adminSession, username: username, status: newStatus });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadRrReportsAndMembers();
+    if (result.success) loadRrMembers();
 }
 
 async function rrDeleteReport(id) {
@@ -4283,7 +4320,7 @@ async function rrDeleteReport(id) {
     const result = await callBackend("deleteReport", { admin: adminSession, id: id });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadRrReportsAndMembers();
+    if (result.success) loadRrReports();
 }
 
 async function rrDeleteRegistration(memberId) {
@@ -4292,7 +4329,7 @@ async function rrDeleteRegistration(memberId) {
     const result = await callBackend("deleteRegistration", { admin: adminSession, memberId: memberId });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadRrReportsAndMembers();
+    if (result.success) loadRrRegistrations();
 }
 
 /* ===== START APP ===== */
