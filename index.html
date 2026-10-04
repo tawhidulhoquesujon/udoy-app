@@ -627,6 +627,20 @@ body.dark-mode .theme-switch-knob {
     letter-spacing: .05em;
 }
 
+.blue-tick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #1d9bf0;
+    color: #fff;
+    font-size: 10px;
+    vertical-align: middle;
+    margin-left: 3px;
+}
+
 .feature-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
     margin-top: 18px;
@@ -1240,7 +1254,7 @@ async function enablePushNotifications() {
             <div class="profile-circle" id="profileInitial">U</div>
             <div>
                 <p class="small-text">Welcome back</p>
-                <h2 id="dashboardName">User</h2>
+                <h2 id="dashboardName"><span id="dashboardNameText">User</span> <span id="dashboardVerifiedTick" class="blue-tick hidden">✔</span></h2>
                 <p id="dashboardUsername">@username</p>
                 <span class="member-id-badge" id="dashboardMemberId">UDOY-000</span>
             </div>
@@ -2588,13 +2602,19 @@ function getValue(id) {
 }
 
 /* ===== DASHBOARD ===== */
+function setDashboardNameAndTick(name, verified) {
+    const nameEl = document.getElementById("dashboardNameText");
+    const tickEl = document.getElementById("dashboardVerifiedTick");
+    if (nameEl) nameEl.textContent = name || "User";
+    if (tickEl) tickEl.classList.toggle("hidden", !verified);
+}
+
 function openDashboard(user) {
     if (!user) return;
-    const name = document.getElementById("dashboardName");
     const username = document.getElementById("dashboardUsername");
     const memberId = document.getElementById("dashboardMemberId");
 
-    if (name) name.textContent = user.name || "User";
+    setDashboardNameAndTick(user.name, user.verified);
     if (username) username.textContent = "@" + (user.username || "username");
     if (memberId) memberId.textContent = user.memberId || "UDOY-000";
     updateAvatarElements(user);
@@ -2641,10 +2661,9 @@ async function refreshCurrentUser() {
             currentUser = result.user;
             localStorage.setItem("udoy_user", JSON.stringify(result.user));
 
-            const name = document.getElementById("dashboardName");
             const username = document.getElementById("dashboardUsername");
             const memberId = document.getElementById("dashboardMemberId");
-            if (name) name.textContent = currentUser.name || "User";
+            setDashboardNameAndTick(currentUser.name, currentUser.verified);
             if (username) username.textContent = "@" + (currentUser.username || "username");
             if (memberId) memberId.textContent = currentUser.memberId || "UDOY-000";
             updateAvatarElements(currentUser);
@@ -2695,7 +2714,7 @@ function renderProfile() {
             '<div class="profile-circle-large" id="profilePhotoCircle">' + avatarInner +
                 '<button class="camera-btn" onclick="document.getElementById(\'profilePhotoInput\').click()" aria-label="Change photo">📷</button>' +
             '</div>' +
-            '<div><p class="small-text">Member ID</p><h2>' + (currentUser.memberId || "-") + '</h2></div>' +
+            '<div><p class="small-text">Member ID</p><h2>' + (currentUser.memberId || "-") + (currentUser.verified ? ' <span class="blue-tick" title="Verified">✔</span>' : '') + '</h2></div>' +
         '</div>' +
         profileRow("Full name", "profileEditName", currentUser.name, true) +
         profileRow("Username", null, "@" + currentUser.username, false) +
@@ -2750,8 +2769,7 @@ async function saveProfileEdits() {
             currentUser.region = religion;
             localStorage.setItem("udoy_user", JSON.stringify(currentUser));
             updateAvatarElements(currentUser);
-            const dashName = document.getElementById("dashboardName");
-            if (dashName) dashName.textContent = name;
+            setDashboardNameAndTick(name, currentUser.verified);
             profileEditMode = false;
             renderProfile();
             showMessage("profileEditMessage", "Profile updated successfully.", "success");
@@ -3182,7 +3200,7 @@ async function doCheckId() {
         }
         clearMessage("checkIdMessage");
         const u = result.user;
-        let html = '<div class="list-item"><h4>' + u.memberId + ' — ' + u.name + '</h4>' +
+        let html = '<div class="list-item"><h4>' + u.memberId + ' — ' + u.name + (u.verified ? ' <span class="blue-tick" title="Verified">✔</span>' : '') + '</h4>' +
             '<p>@' + u.username + ' · ' + u.region + ', ' + u.country + '</p>' +
             '<p class="meta">Status: ' + u.status + '</p>';
         if (u.registrationPdfUrl) {
@@ -4194,11 +4212,12 @@ async function loadRrMembers() {
         if (memberResult.members.length === 0) memberList.innerHTML = '<p class="policy-empty">No members yet.</p>';
         memberResult.members.forEach(m => {
             const isActive = m.status !== "Deactivated";
-            memberList.innerHTML += '<div class="list-item"><h4>' + m.memberId + ' — ' + m.name + '</h4>' +
+            memberList.innerHTML += '<div class="list-item"><h4>' + m.memberId + ' — ' + m.name + (m.verified ? ' <span class="blue-tick" title="Verified">✔</span>' : '') + '</h4>' +
                 '<p>@' + m.username + ' · ' + m.mobile + '</p>' +
-                '<p class="meta">' + m.email + ' · ' + m.status + '</p>' +
+                '<p class="meta">' + m.email + ' · ' + m.status + ' · ' + (m.verified ? 'Verified' : 'Unverified') + '</p>' +
                 '<div class="row-actions">' +
                     '<button class="btn-verify" onclick="rrEditMember(\'' + m.username + '\',\'' + m.memberId + '\')">Edit</button>' +
+                    '<button class="' + (m.verified ? 'btn-reject' : 'btn-verify') + '" onclick="rrSetVerified(\'' + m.username + '\',' + (!m.verified) + ')">' + (m.verified ? 'Unverify' : 'Verify') + '</button>' +
                     '<button class="' + (isActive ? 'btn-reject' : 'btn-verify') + '" onclick="rrToggleStatus(\'' + m.username + '\',\'' + (isActive ? 'Deactivated' : 'Active') + '\')">' + (isActive ? 'Deactivate' : 'Activate') + '</button>' +
                     '<button class="btn-delete" onclick="rrDeleteMember(\'' + m.username + '\')">Delete</button>' +
                 '</div></div>';
@@ -4298,6 +4317,14 @@ async function rrDeleteMember(username) {
     if (!confirm("Permanently delete this member's account? This cannot be undone.")) return;
     showLoading("মেম্বার মুছে ফেলা হচ্ছে…");
     const result = await callBackend("deleteMember", { admin: adminSession, username: username });
+    hideLoading();
+    showMessage("rrMessage", result.message, result.success ? "success" : "error");
+    if (result.success) loadRrMembers();
+}
+
+async function rrSetVerified(username, verified) {
+    showLoading("স্ট্যাটাস আপডেট করা হচ্ছে…");
+    const result = await callBackend("setMemberVerified", { admin: adminSession, username: username, verified: verified });
     hideLoading();
     showMessage("rrMessage", result.message, result.success ? "success" : "error");
     if (result.success) loadRrMembers();
