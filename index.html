@@ -1392,7 +1392,18 @@ async function enablePushNotifications() {
             <div><h2>Registration Form</h2><p>Fill to generate your official PDF</p></div>
         </div>
 
-        <div class="card">
+        <div class="card" id="regAlreadySubmittedCard" style="display:none;">
+            <p style="font-size:15px; line-height:1.6;">
+                ✅ আপনি ইতিমধ্যে আবেদন করেছেন। দ্বিতীয়বার registration form জমা দেওয়া যাবে না।
+            </p>
+            <p class="subtitle" style="margin-top:6px;">
+                আপনার registration PDF ডাউনলোড করতে <b>Check ID</b>-তে গিয়ে আপনার Member ID বা username দিয়ে সার্চ করুন।
+            </p>
+            <button class="primary-btn" style="margin-top:14px;" onclick="showPage('checkIdPage')">🔎 Check ID-তে যান</button>
+            <a id="regAlreadySubmittedPdfLink" class="secondary-btn" style="display:block; text-align:center; margin-top:8px; text-decoration:none;" href="#" target="_blank" rel="noopener">📄 PDF সরাসরি দেখুন</a>
+        </div>
+
+        <div class="card" id="registrationFormCard">
             <div id="regFormMessage" class="message"></div>
 
             <div class="input-group">
@@ -2984,12 +2995,26 @@ let regPhotoMimeType = null;
 function openRegistrationForm() {
     if (!currentUser) return;
     clearMessage("regFormMessage");
-    const nameEN = document.getElementById("regNameEN");
-    const mobile = document.getElementById("regMobile");
-    const email = document.getElementById("regEmail");
-    if (nameEN && !nameEN.value) nameEN.value = currentUser.name || "";
-    if (mobile && !mobile.value) mobile.value = currentUser.mobile || "";
-    if (email && !email.value) email.value = currentUser.email || "";
+
+    const alreadyCard = document.getElementById("regAlreadySubmittedCard");
+    const formCard = document.getElementById("registrationFormCard");
+
+    if (currentUser.registrationPdfUrl) {
+        alreadyCard.style.display = "block";
+        formCard.style.display = "none";
+        const pdfLink = document.getElementById("regAlreadySubmittedPdfLink");
+        if (pdfLink) pdfLink.href = currentUser.registrationPdfUrl;
+    } else {
+        alreadyCard.style.display = "none";
+        formCard.style.display = "block";
+        const nameEN = document.getElementById("regNameEN");
+        const mobile = document.getElementById("regMobile");
+        const email = document.getElementById("regEmail");
+        if (nameEN && !nameEN.value) nameEN.value = currentUser.name || "";
+        if (mobile && !mobile.value) mobile.value = currentUser.mobile || "";
+        if (email && !email.value) email.value = currentUser.email || "";
+    }
+
     showPage("registrationFormPage");
 }
 
@@ -3114,10 +3139,16 @@ document.addEventListener("DOMContentLoaded", function() {
                     regForm.reset();
                     document.getElementById("regPhotoPreview").style.display = "none";
                     regPhotoBase64 = null;
+                    currentUser.registrationPdfUrl = result.pdfUrl;
+                    localStorage.setItem("udoy_user", JSON.stringify(currentUser));
                 } else if (result.alreadySubmitted) {
                     const el = document.getElementById("regFormMessage");
                     el.innerHTML = result.message + (result.pdfUrl ? ' <a href="' + result.pdfUrl + '" target="_blank">আগের PDF দেখুন</a>' : "");
                     el.className = "message show error";
+                    if (result.pdfUrl) {
+                        currentUser.registrationPdfUrl = result.pdfUrl;
+                        localStorage.setItem("udoy_user", JSON.stringify(currentUser));
+                    }
                 } else {
                     showMessage("regFormMessage", result.message || "কিছু একটা সমস্যা হয়েছে।", "error");
                 }
