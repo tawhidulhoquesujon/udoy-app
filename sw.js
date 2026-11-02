@@ -34,7 +34,10 @@ messaging.onBackgroundMessage(function(payload) {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) =>
+      // add files one by one so a single missing file can't break the install
+      Promise.all(FILES_TO_CACHE.map((f) => cache.add(f).catch(() => null)))
+    )
   );
   self.skipWaiting();
 });
@@ -48,27 +51,26 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+/* AUTO-UPDATE: our own files (html, js, css, images) are always fetched fresh
+   from the network first (bypassing the browser/GitHub cache). The cache is only
+   a fallback when offline. So uploading new files to GitHub is enough —
+   no need to change CACHE_NAME any more. */
 self.addEventListener("fetch", (event) => {
-  const isNavigation =
-    event.request.mode === "navigate" ||
-    (event.request.method === "GET" &&
-      event.request.headers.get("accept") &&
-      event.request.headers.get("accept").includes("text/html"));
+  const req = event.request;
+  if (req.method !== "GET") return;
 
-  if (isNavigation) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return; // fonts, firebase, backend: leave alone
 
   event.respondWith(
-    caches.match(event.request).then((response) => response || fetch(event.request))
+    fetch(req, { cache: "no-store" })
+      .then((response) => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
   );
 });
