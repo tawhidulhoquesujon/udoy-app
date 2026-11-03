@@ -448,6 +448,7 @@ body.dark-mode .theme-switch-knob {
 .message.success { background: var(--success-bg); color: var(--success-ink); border-color: var(--green); }
 .hidden { display: none !important; }
 
+
 /* ===== DASHBOARD ===== */
 
 .dashboard-header {
@@ -935,6 +936,47 @@ button:focus-visible, input:focus-visible, select:focus-visible {
         50%      { transform: skewX(1.6deg); }
     }
 }
+
+/* ===== PAYMENT HISTORY, RECEIPT, MEMBER CARD, BIRTHDAY ===== */
+.pay-chip { display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; }
+.pay-chip.ok { background:#E4EEE1; color:#0F3D2E; }
+.pay-chip.wait { background:#FFF1D0; color:#9A6A12; }
+.pay-total { background:var(--green); color:#fff; border-radius:16px; padding:14px 18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+.pay-total b { font-size:22px; color:var(--gold); }
+
+.receipt-overlay { position:fixed; inset:0; z-index:9999; background:rgba(10,42,32,.75); overflow:auto; padding:18px 12px 30px; }
+.receipt-overlay.hidden { display:none; }
+.receipt-sheet { max-width:400px; margin:0 auto 14px; background:#fff; color:#1B2420; border:2px solid var(--gold); border-radius:14px; padding:22px 20px; font-family:Arial,sans-serif; }
+.receipt-sheet h3 { margin:0; text-align:center; color:var(--green); letter-spacing:3px; font-size:22px; }
+.receipt-sheet .sub { text-align:center; font-size:11px; color:var(--sage); margin:2px 0 14px; }
+.receipt-sheet .stamp { text-align:center; margin:10px 0 14px; font-weight:700; color:var(--green); border:2px dashed var(--gold); border-radius:10px; padding:8px; }
+.receipt-row { display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px dotted var(--line); font-size:13px; }
+.receipt-row span:first-child { color:var(--sage); }
+.receipt-row span:last-child { font-weight:700; text-align:right; word-break:break-word; }
+.receipt-actions { max-width:400px; margin:0 auto; display:grid; gap:10px; }
+@media print {
+    body > *:not(#receiptOverlay) { display:none !important; }
+    #receiptOverlay { position:static; background:#fff; padding:0; }
+    #receiptOverlay.hidden { display:none !important; }
+    .no-print { display:none !important; }
+    .receipt-sheet { border:2px solid #000; margin:0 auto; }
+}
+
+.member-card { max-width:340px; margin:6px auto; border-radius:20px; overflow:hidden; background:linear-gradient(145deg,#0F3D2E,#0A2A20); color:#fff; box-shadow:0 12px 30px rgba(10,42,32,.35); position:relative; }
+.member-card::after { content:""; position:absolute; top:0; left:0; right:0; height:6px; background:repeating-linear-gradient(90deg,var(--gold) 0 8px,transparent 8px 16px); }
+.mc-top { padding:22px 20px 8px; display:flex; align-items:center; gap:14px; }
+.mc-photo { width:70px; height:70px; border-radius:50%; border:3px solid var(--gold); object-fit:cover; background:#1d5a45; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; flex-shrink:0; overflow:hidden; }
+.mc-photo img { width:100%; height:100%; object-fit:cover; }
+.mc-name { font-size:18px; font-weight:700; line-height:1.2; }
+.mc-id { margin-top:6px; display:inline-block; background:rgba(232,163,61,.18); border:1px solid var(--gold); color:var(--gold); font-family:monospace; font-size:13px; padding:3px 10px; border-radius:20px; }
+.mc-qr { margin:12px auto 6px; background:#fff; width:176px; height:176px; border-radius:14px; display:flex; align-items:center; justify-content:center; padding:8px; box-sizing:border-box; }
+.mc-qr img, .mc-qr canvas { max-width:100%; height:auto; }
+.mc-foot { text-align:center; font-size:11px; color:#cfe3d8; padding:6px 10px 18px; letter-spacing:.5px; }
+.mc-brand { text-align:center; font-size:11px; color:var(--gold); letter-spacing:3px; font-weight:700; padding:0 10px; }
+
+.birthday-banner { background:linear-gradient(135deg,#7A2E4F,#C1502E); color:#fff; border-radius:16px; padding:14px 18px; margin-bottom:14px; text-align:center; font-weight:700; box-shadow:0 6px 16px rgba(122,46,79,.3); border:2px solid #F6C453; }
+.birthday-banner small { display:block; font-weight:400; opacity:.9; margin-top:2px; }
+.birthday-banner.hidden { display:none; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -996,6 +1038,13 @@ async function enablePushNotifications() {
 
 <body>
 
+<div id="receiptOverlay" class="receipt-overlay hidden">
+    <div class="receipt-sheet" id="receiptSheet"></div>
+    <div class="receipt-actions no-print">
+        <button class="primary-btn" onclick="window.print()">⬇ Download / Print PDF</button>
+        <button class="secondary-btn" onclick="closeReceipt()">Close</button>
+    </div>
+</div>
 <div class="app">
 
     <!-- LOGIN PAGE -->
@@ -1282,6 +1331,8 @@ async function enablePushNotifications() {
             <div class="headline-ticker-track" id="headlineTickerTrack"></div>
         </div>
 
+        <div id="birthdayBanner" class="birthday-banner hidden"></div>
+
         <div class="welcome-card">
             <div class="profile-circle" id="profileInitial">U</div>
             <div>
@@ -1373,6 +1424,8 @@ async function enablePushNotifications() {
         <div class="card">
             <button class="primary-btn" style="margin-bottom:12px;" onclick="openRegistrationForm()">📝 Registration Form</button>
             <button class="secondary-btn" style="margin-bottom:12px;" onclick="showPage('paymentPage')">💳 Payment</button>
+            <button class="secondary-btn" style="margin-bottom:12px;" onclick="openPaymentHistory()">🧾 Payment History & Receipt</button>
+            <button class="secondary-btn" style="margin-bottom:12px;" onclick="openMemberCard()">🪪 Digital Member Card</button>
             <button class="secondary-btn" onclick="showPage('checkIdPage')">🔎 Check ID</button>
         </div>
     </section>
@@ -1607,6 +1660,24 @@ async function enablePushNotifications() {
 
 
     <!-- CHECK ID -->
+
+    <section id="paymentHistoryPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('memberMenuPage')" aria-label="Back">‹</button>
+            <div><h2>Payment History</h2><p>Your payments & receipts</p></div>
+        </div>
+        <div id="payHistorySummary"></div>
+        <div id="payHistoryList"></div>
+    </section>
+
+    <section id="memberCardPage" class="page">
+        <div class="top-header">
+            <button class="back-btn" onclick="showPage('memberMenuPage')" aria-label="Back">‹</button>
+            <div><h2>Member Card</h2><p>Scan the QR to verify membership</p></div>
+        </div>
+        <div id="memberCardBox"></div>
+    </section>
+
     <section id="checkIdPage" class="page">
         <div class="top-header">
             <button class="back-btn" onclick="showPage('memberMenuPage')" aria-label="Back">‹</button>
@@ -2644,6 +2715,127 @@ function getValue(id) {
     return element ? element.value.trim() : "";
 }
 
+
+/* =========================================================
+   PAYMENT HISTORY + RECEIPT
+========================================================= */
+let _myPayments = [];
+function bnAmount(n) { return "৳" + Number(n || 0).toLocaleString("en-US"); }
+
+async function openPaymentHistory() {
+    showPage("paymentHistoryPage");
+    if (!currentUser) return;
+    const list = document.getElementById("payHistoryList");
+    const sum = document.getElementById("payHistorySummary");
+    list.innerHTML = '<p class="policy-empty">Loading…</p>'; sum.innerHTML = "";
+    try {
+        const r = await callBackend("getMyPayments", { username: currentUser.username });
+        if (!r.success) { list.innerHTML = '<p class="policy-empty">' + escapeHtml(r.message || "Could not load.") + '</p>'; return; }
+        _myPayments = r.payments;
+        if (!_myPayments.length) { list.innerHTML = '<p class="policy-empty">No payments yet.</p>'; return; }
+        const total = _myPayments.filter(p => p.status === "Verified").reduce((a, p) => a + Number(p.amount || 0), 0);
+        sum.innerHTML = '<div class="pay-total"><span>Total verified</span><b>' + bnAmount(total) + '</b></div>';
+        list.innerHTML = "";
+        _myPayments.forEach(function(p, i) {
+            const ok = p.status === "Verified";
+            list.innerHTML += '<div class="list-item"><h4>' + bnAmount(p.amount) + ' — ' + escapeHtml(String(p.purpose)) + '</h4>' +
+                '<p>' + escapeHtml(String(p.method)) + ' · ' + escapeHtml(String(p.month)) + '</p>' +
+                '<p class="meta">TXN: ' + escapeHtml(String(p.transactionId)) + ' · ' + escapeHtml(String(p.date)) + '</p>' +
+                '<div class="row-actions"><span class="pay-chip ' + (ok ? 'ok' : 'wait') + '">' + (ok ? '✔ Verified' : '⏳ Pending') + '</span>' +
+                (ok ? '<button class="btn-verify" onclick="showReceipt(' + i + ')">🧾 Receipt</button>' : '') + '</div></div>';
+        });
+    } catch (e) { list.innerHTML = '<p class="policy-empty">Check your connection and try again.</p>'; }
+}
+
+function showReceipt(i) {
+    const p = _myPayments[i]; if (!p || !currentUser) return;
+    const row = (a, b) => '<div class="receipt-row"><span>' + a + '</span><span>' + escapeHtml(String(b)) + '</span></div>';
+    document.getElementById("receiptSheet").innerHTML =
+        '<h3>UDOY</h3><div class="sub">Unity for Development &amp; Opportunity of Youth</div>' +
+        '<div class="stamp">PAYMENT RECEIPT ✔ VERIFIED</div>' +
+        row("Receipt No", "R-" + String(p.id).slice(-8).toUpperCase()) +
+        row("Member", currentUser.name) + row("Member ID", p.memberId || currentUser.memberId) +
+        row("Purpose", p.purpose) + row("Month", p.month) + row("Method", p.method) +
+        row("Transaction ID", p.transactionId) + row("Date", p.date) +
+        '<div class="receipt-row" style="border:none;font-size:17px;"><span>Amount</span><span style="color:#0F3D2E;">' + bnAmount(p.amount) + '</span></div>' +
+        '<div class="sub" style="margin-top:12px;">This is a computer-generated receipt.</div>';
+    document.getElementById("receiptOverlay").classList.remove("hidden");
+}
+function closeReceipt() { document.getElementById("receiptOverlay").classList.add("hidden"); }
+
+/* =========================================================
+   DIGITAL MEMBER CARD (QR)
+========================================================= */
+function loadQrLib() {
+    return new Promise(function(resolve) {
+        if (window.QRCode) return resolve(true);
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+        s.onload = function() { resolve(!!window.QRCode); };
+        s.onerror = function() { resolve(false); };
+        document.head.appendChild(s);
+    });
+}
+async function openMemberCard() {
+    showPage("memberCardPage");
+    if (!currentUser) return;
+    const u = currentUser;
+    const photo = u.profilePhotoUrl ? '<img src="' + escapeHtml(u.profilePhotoUrl) + '" alt="">' : escapeHtml((u.name || "U").charAt(0).toUpperCase());
+    document.getElementById("memberCardBox").innerHTML =
+        '<div class="member-card">' +
+            '<div class="mc-top"><div class="mc-photo">' + photo + '</div><div>' +
+                '<div class="mc-name">' + escapeHtml(u.name || "") + (u.verified ? ' <span class="blue-tick">✔</span>' : '') + '</div>' +
+                '<span class="mc-id">' + escapeHtml(u.memberId || "") + '</span></div></div>' +
+            '<div class="mc-qr" id="mcQr"></div>' +
+            '<div class="mc-brand">UDOY MEMBER</div>' +
+            '<div class="mc-foot">Scan to verify membership</div>' +
+        '</div>';
+    const ok = await loadQrLib();
+    const box = document.getElementById("mcQr");
+    if (ok && box) {
+        const url = location.origin + location.pathname + "?verify=" + encodeURIComponent(u.memberId || "");
+        new QRCode(box, { text: url, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+    } else if (box) {
+        box.innerHTML = '<span style="color:#0F3D2E;font-weight:700;font-size:13px;text-align:center;">' + escapeHtml(u.memberId || "") + '</span>';
+    }
+}
+
+/* scanning the QR opens the app on ?verify=ID → runs Check ID */
+(function() {
+    try {
+        const v = new URLSearchParams(location.search).get("verify");
+        if (v) sessionStorage.setItem("udoy_verify", v);
+    } catch (e) {}
+})();
+function runPendingVerify() {
+    let v = null;
+    try { v = sessionStorage.getItem("udoy_verify"); } catch (e) {}
+    if (!v || !currentUser) return;
+    sessionStorage.removeItem("udoy_verify");
+    showPage("checkIdPage");
+    const inp = document.getElementById("checkIdInput");
+    if (inp) inp.value = v;
+    doCheckId();
+}
+
+/* =========================================================
+   BIRTHDAY GREETING (home page)
+========================================================= */
+function showBirthdayBanner(user) {
+    const el = document.getElementById("birthdayBanner");
+    if (!el) return;
+    let m = null;
+    const t = String((user && user.dob) || "");
+    const a = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (a) m = { m: +a[2], d: +a[3] };
+    else { const b = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/); if (b) m = { m: +b[2], d: +b[1] }; }
+    const now = new Date();
+    const isBday = m && m.m === now.getMonth() + 1 && m.d === now.getDate();
+    el.classList.toggle("hidden", !isBday);
+    if (isBday) el.innerHTML = '🎂 শুভ জন্মদিন, ' + escapeHtml(user.name || "") + '! 🎉<small>UDOY পরিবারের পক্ষ থেকে আন্তরিক শুভেচ্ছা 🌸</small>';
+}
+
+
 /* ===== DASHBOARD ===== */
 function setDashboardNameAndTick(name, verified) {
     const nameEl = document.getElementById("dashboardNameText");
@@ -2658,6 +2850,8 @@ function openDashboard(user) {
     const memberId = document.getElementById("dashboardMemberId");
 
     setDashboardNameAndTick(user.name, user.verified);
+    showBirthdayBanner(user);
+    setTimeout(runPendingVerify, 400);
     if (username) username.textContent = "@" + (user.username || "username");
     if (memberId) memberId.textContent = user.memberId || "UDOY-000";
     updateAvatarElements(user);
