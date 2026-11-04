@@ -1922,220 +1922,34 @@ async function enablePushNotifications() {
             <div id="fdMessage" class="message"></div>
             <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
                 <button class="tab-btn active" id="fdTabOverview" onclick="switchFdTab('overview')">Overview</button>
-                <button class="tab-btn" id="fdTabIncome" onclick="switchFdTab('income')">Income</button>
-                <button class="tab-btn" id="fdTabExpense" onclick="switchFdTab('expense')">Expense</button>
-                <button class="tab-btn" id="fdTabFunds" onclick="switchFdTab('funds')">Funds</button>
                 <button class="tab-btn" id="fdTabPayments" onclick="switchFdTab('payments')">Member Payments <span id="fdPendingBadge" class="tab-badge hidden">0</span></button>
-                <button class="tab-btn" id="fdTabRegister" onclick="switchFdTab('register')">Register</button>
             </div>
 
-            <!-- OVERVIEW -->
+            <!-- OVERVIEW (member payments only) -->
             <div id="fdPanelOverview">
                 <div class="welcome-card" style="margin:16px 0;">
                     <div>
-                        <p class="small-text">Total Income</p>
-                        <h2 id="fdTotalIncome">৳0</h2>
+                        <p class="small-text">Total Verified Payments</p>
+                        <h2 id="fdTotalIncome" style="color:#E8A33D;">৳0</h2>
                         <p id="fdIncomeBreakdown" style="color:rgba(251,246,236,.75);font-size:12px;"></p>
                     </div>
                 </div>
                 <div class="two-column">
-                    <div class="list-item"><h4>Total Expense</h4><p id="fdTotalExpense">৳0</p></div>
-                    <div class="list-item"><h4>Available Balance</h4><p id="fdBalance">৳0</p></div>
+                    <div class="list-item"><h4>This Month</h4><p id="fdThisMonth">৳0</p></div>
+                    <div class="list-item"><h4>Pending</h4><p id="fdPendingInfo">0</p></div>
                 </div>
                 <div class="stitch small"></div>
-                <h3 style="font-family:var(--font-display);margin-bottom:10px;">By account type</h3>
-                <div id="fdByType"></div>
-            </div>
-
-            <!-- INCOME -->
-            <div id="fdPanelIncome" class="hidden">
-                <h3 style="font-family:var(--font-display);margin:16px 0 10px;">Add Income</h3>
-                <div class="input-group"><label>Date</label><input type="date" id="incDate"></div>
-                <div class="input-group"><label>Source / Member</label><input type="text" id="incSource" placeholder="e.g. Donor name"></div>
-                <div class="input-group">
-                    <label>Income Type</label>
-                    <select id="incType">
-                        <option>Membership</option><option>Donation</option><option>Grant</option><option>Other</option>
-                    </select>
-                </div>
-                <div class="input-group"><label>Amount (৳)</label><input type="number" id="incAmount"></div>
-                <div class="input-group">
-                    <label>Payment Method</label>
-                    <select id="incMethod"><option>Cash</option><option>Bank</option><option>bKash</option><option>Nagad</option><option>Other</option></select>
-                </div>
-                <div class="input-group"><label>Reference</label><input type="text" id="incReference"></div>
-                <div class="input-group"><label>Received By</label><input type="text" id="incReceivedBy"></div>
-                <div class="input-group">
-                    <label>Fund / Account</label>
-                    <select id="incFund"></select>
-                </div>
-                <div class="input-group">
-                    <label>Receipt (optional)</label>
-                    <input type="file" id="incReceipt" accept="image/*">
-                </div>
-                <button class="primary-btn" onclick="fdAddIncome()">Add Income</button>
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">By payment method</h3>
+                <div id="fdByMethod"></div>
                 <div class="stitch small"></div>
-                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Income Register</h3>
-                <div id="fdIncomeList"></div>
-            </div>
-
-            <!-- EXPENSE -->
-            <div id="fdPanelExpense" class="hidden">
-                <h3 style="font-family:var(--font-display);margin:16px 0 10px;">Add Expense</h3>
-                <div class="input-group"><label>Date</label><input type="date" id="expDate"></div>
-                <div class="input-group"><label>Category</label><input type="text" id="expCategory" placeholder="e.g. Office supplies"></div>
-                <div class="input-group"><label>Description</label><input type="text" id="expDescription"></div>
-                <div class="input-group"><label>Amount (৳)</label><input type="number" id="expAmount"></div>
-                <div class="input-group">
-                    <label>Payment Method</label>
-                    <select id="expMethod"><option>Cash</option><option>Bank</option><option>bKash</option><option>Nagad</option><option>Other</option></select>
-                </div>
-                <div class="input-group"><label>Voucher / Receipt Number</label><input type="text" id="expVoucher"></div>
-                <div class="input-group"><label>Approved By</label><input type="text" id="expApprovedBy"></div>
-                <div class="input-group"><label>Paid By</label><input type="text" id="expPaidBy"></div>
-                <div class="input-group">
-                    <label>Fund / Account</label>
-                    <select id="expFund"></select>
-                </div>
-                <div class="input-group">
-                    <label>Receipt (optional)</label>
-                    <input type="file" id="expReceipt" accept="image/*">
-                </div>
-                <button class="primary-btn" onclick="fdAddExpense()">Add Expense</button>
-                <div class="stitch small"></div>
-                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Expense Register</h3>
-                <div id="fdExpenseList"></div>
-            </div>
-
-            <!-- FUNDS -->
-            <div id="fdPanelFunds" class="hidden">
-                <h3 style="font-family:var(--font-display);margin:16px 0 10px;">Add Fund / Account</h3>
-                <div class="input-group"><label>Name</label><input type="text" id="fundName" placeholder="e.g. Climate Project"></div>
-                <div class="input-group">
-                    <label>Type</label>
-                    <select id="fundType"><option>Cash</option><option>Bank</option><option>MobileBanking</option><option>Project</option></select>
-                </div>
-                <div class="input-group"><label>Source</label><input type="text" id="fundSource"></div>
-                <div class="input-group"><label>Purpose</label><input type="text" id="fundPurpose"></div>
-                <button class="primary-btn" onclick="fdAddFund()">Add Fund</button>
-                <div class="stitch small"></div>
-                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Funds & Accounts</h3>
-                <div id="fdFundsList"></div>
+                <h3 style="font-family:var(--font-display);margin-bottom:10px;">Last 6 months</h3>
+                <div id="fdByMonth"></div>
             </div>
 
             <!-- MEMBER PAYMENTS -->
             <div id="fdPanelPayments" class="hidden">
                 <button class="secondary-btn" style="margin-bottom:10px;" onclick="exportPaymentsCSV()">⬇️ Export CSV</button>
                 <div id="fdPaymentList"></div>
-            </div>
-
-            <!-- REGISTER (Asset / Stock / Advance) -->
-            <div id="fdPanelRegister" class="hidden">
-
-                <!-- Register menu -->
-                <div id="registerMenu">
-                    <div class="sector-grid" style="margin-top:16px;">
-                        <button class="sector-card" onclick="openRegisterSub('asset')">
-                            <div class="icon">🏢</div><h3>Asset Register</h3><p>Track organizational assets</p>
-                        </button>
-                        <button class="sector-card" onclick="openRegisterSub('stock')">
-                            <div class="icon">📦</div><h3>Stock Register</h3><p>Inventory & stock levels</p>
-                        </button>
-                        <button class="sector-card" onclick="openRegisterSub('advance')">
-                            <div class="icon">💵</div><h3>Advance Register</h3><p>Advance payments & settlement</p>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ASSET SUB-PAGE -->
-                <div id="registerAsset" class="hidden">
-                    <button class="text-btn" style="margin:16px 0 0;" onclick="closeRegisterSub()">‹ Back to Register</button>
-                    <h3 style="font-family:var(--font-display);margin:14px 0 10px;">Asset Register</h3>
-                    <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
-                        <button class="tab-btn active" onclick="assetSubAction('list')">Asset List</button>
-                        <button class="tab-btn" onclick="assetSubAction('add')">Add New Asset</button>
-                        <button class="tab-btn" onclick="assetSubAction('history')">History</button>
-                    </div>
-                    <p class="subtitle" style="margin-top:10px;">To Transfer / send for Maintenance / mark Damaged, Lost, Returned or Disposed — use the status buttons on each asset below.</p>
-
-                    <div id="assetAddForm" class="hidden" style="margin-top:14px;">
-                        <div class="input-group"><label>Asset Name</label><input type="text" id="assetName"></div>
-                        <div class="input-group"><label>Category</label><input type="text" id="assetCategory"></div>
-                        <div class="input-group"><label>Purchase Date</label><input type="date" id="assetPurchaseDate"></div>
-                        <div class="input-group"><label>Value (৳)</label><input type="number" id="assetValue"></div>
-                        <div class="input-group"><label>Location</label><input type="text" id="assetLocation"></div>
-                        <div class="input-group">
-                            <label>Status</label>
-                            <select id="assetStatus"><option>Active</option><option>Under Repair</option><option>Disposed</option></select>
-                        </div>
-                        <button class="primary-btn" onclick="submitAsset()">Save Asset</button>
-                    </div>
-
-                    <div id="assetHistoryView" class="hidden" style="margin-top:14px;"></div>
-                    <div id="assetListView" style="margin-top:14px;"></div>
-                </div>
-
-                <!-- STOCK SUB-PAGE -->
-                <div id="registerStock" class="hidden">
-                    <button class="text-btn" style="margin:16px 0 0;" onclick="closeRegisterSub()">‹ Back to Register</button>
-                    <h3 style="font-family:var(--font-display);margin:14px 0 10px;">Stock Register</h3>
-                    <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
-                        <button class="tab-btn active" onclick="stockSubAction('list')">Item List</button>
-                        <button class="tab-btn" onclick="stockSubAction('add')">Add Item</button>
-                        <button class="tab-btn" onclick="stockSubAction('in')">Stock In</button>
-                        <button class="tab-btn" onclick="stockSubAction('out')">Stock Out</button>
-                        <button class="tab-btn" onclick="stockSubAction('damaged')">Damaged</button>
-                        <button class="tab-btn" onclick="stockSubAction('lost')">Lost</button>
-                        <button class="tab-btn" onclick="stockSubAction('returned')">Returned</button>
-                        <button class="tab-btn" onclick="stockSubAction('history')">History</button>
-                    </div>
-
-                    <div id="stockAddForm" class="hidden" style="margin-top:14px;">
-                        <div class="input-group"><label>Item Name</label><input type="text" id="stockItemName"></div>
-                        <div class="input-group"><label>Category</label><input type="text" id="stockCategory"></div>
-                        <div class="input-group"><label>Unit</label><input type="text" id="stockUnit" placeholder="e.g. pcs, kg, box"></div>
-                        <div class="input-group"><label>Opening Quantity</label><input type="number" id="stockOpeningQty"></div>
-                        <div class="input-group"><label>Low Stock Alert Level</label><input type="number" id="stockLowThreshold"></div>
-                        <button class="primary-btn" onclick="submitStockItem()">Save Item</button>
-                    </div>
-
-                    <div id="stockInOutForm" class="hidden" style="margin-top:14px;">
-                        <div class="input-group">
-                            <label>Item</label>
-                            <select id="stockTxnItem"></select>
-                        </div>
-                        <div class="input-group"><label>Quantity</label><input type="number" id="stockTxnQty"></div>
-                        <div class="input-group"><label>Note</label><input type="text" id="stockTxnNote"></div>
-                        <button class="primary-btn" onclick="submitStockTxn()" id="stockTxnBtn">Submit</button>
-                    </div>
-
-                    <div id="stockHistoryView" class="hidden" style="margin-top:14px;"></div>
-                    <div id="stockListView" style="margin-top:14px;"></div>
-                </div>
-
-                <!-- ADVANCE SUB-PAGE -->
-                <div id="registerAdvance" class="hidden">
-                    <button class="text-btn" style="margin:16px 0 0;" onclick="closeRegisterSub()">‹ Back to Register</button>
-                    <h3 style="font-family:var(--font-display);margin:14px 0 10px;">Advance Register</h3>
-                    <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
-                        <button class="tab-btn active" onclick="advanceSubAction('list')">Advance List</button>
-                        <button class="tab-btn" onclick="advanceSubAction('add')">New Advance</button>
-                        <button class="tab-btn" onclick="advanceSubAction('history')">History</button>
-                    </div>
-                    <p class="subtitle" style="margin-top:10px;">To record a Payment, Adjustment/Settlement, or Return — use the buttons on each advance below.</p>
-
-                    <div id="advanceAddForm" class="hidden" style="margin-top:14px;">
-                        <div class="input-group"><label>Person Name</label><input type="text" id="advancePersonName"></div>
-                        <div class="input-group"><label>Purpose</label><input type="text" id="advancePurpose"></div>
-                        <div class="input-group"><label>Amount (৳)</label><input type="number" id="advanceAmount"></div>
-                        <div class="input-group"><label>Date</label><input type="date" id="advanceDate"></div>
-                        <button class="primary-btn" onclick="submitAdvance()">Save Advance</button>
-                    </div>
-
-                    <div id="advanceHistoryView" class="hidden" style="margin-top:14px;"></div>
-                    <div id="advanceListView" style="margin-top:14px;"></div>
-                </div>
-
             </div>
         </div>
 
@@ -3906,16 +3720,12 @@ async function hrDeletePolicy(id) {
 ========================================================= */
 
 function switchFdTab(tab) {
-    ["overview","income","expense","funds","payments","register"].forEach(t => {
+    ["overview","payments"].forEach(t => {
         document.getElementById("fdTab" + capitalize(t)).classList.toggle("active", t === tab);
         document.getElementById("fdPanel" + capitalize(t)).classList.toggle("hidden", t !== tab);
     });
     if (tab === "overview") loadFdOverview();
-    if (tab === "income") { loadFundOptions(); loadFdIncomes(); }
-    if (tab === "expense") { loadFundOptions(); loadFdExpenses(); }
-    if (tab === "funds") loadFdFunds();
     if (tab === "payments") loadFdPayments();
-    if (tab === "register") closeRegisterSub();
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -3943,78 +3753,21 @@ async function updateFdPendingBadge() {
 async function loadFdOverview() {
     const result = await callBackend("getFinancialSummary", { admin: adminSession });
     if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
-    document.getElementById("fdTotalIncome").textContent = "৳" + result.totalIncome.toLocaleString();
-    document.getElementById("fdIncomeBreakdown").textContent =
-        "Member contributions: ৳" + result.memberContributions.toLocaleString() + " · Other income: ৳" + result.registerIncome.toLocaleString();
-    document.getElementById("fdTotalExpense").textContent = "৳" + result.totalExpense.toLocaleString();
-    document.getElementById("fdBalance").textContent = "৳" + result.balance.toLocaleString();
+    document.getElementById("fdTotalIncome").textContent = "৳" + result.totalReceived.toLocaleString();
+    document.getElementById("fdIncomeBreakdown").textContent = result.verifiedCount + " verified payments";
+    document.getElementById("fdThisMonth").textContent = "৳" + result.thisMonth.toLocaleString();
+    document.getElementById("fdPendingInfo").textContent = result.pendingCount + " (৳" + result.pendingAmount.toLocaleString() + ")";
 
-    const byType = document.getElementById("fdByType");
-    byType.innerHTML = "";
-    if (result.byType.length === 0) byType.innerHTML = '<p class="policy-empty">No funds/accounts added yet.</p>';
-    result.byType.forEach(t => {
-        byType.innerHTML += '<div class="list-item"><h4>' + t.type + '</h4>' +
-            '<p>Received: ৳' + t.received.toLocaleString() + ' · Spent: ৳' + t.spent.toLocaleString() + '</p>' +
-            '<p class="meta">Remaining: ৳' + t.remaining.toLocaleString() + '</p></div>';
+    const byMethod = document.getElementById("fdByMethod");
+    byMethod.innerHTML = result.byMethod.length ? "" : '<p class="policy-empty">No verified payments yet.</p>';
+    result.byMethod.forEach(m => {
+        byMethod.innerHTML += '<div class="list-item"><h4>' + escapeHtml(String(m.method)) + '</h4><p>৳' + m.amount.toLocaleString() + ' · ' + m.count + ' payments</p></div>';
     });
-}
-
-async function loadFundOptions() {
-    const result = await callBackend("getFunds", { admin: adminSession });
-    if (!result.success) return;
-    [document.getElementById("incFund"), document.getElementById("expFund")].forEach(select => {
-        if (!select) return;
-        const current = select.value;
-        select.innerHTML = "";
-        result.funds.forEach(f => {
-            const opt = document.createElement("option");
-            opt.value = f.id;
-            opt.textContent = f.name + " (" + f.type + ")";
-            select.appendChild(opt);
-        });
-        if (current) select.value = current;
+    const byMonth = document.getElementById("fdByMonth");
+    byMonth.innerHTML = "";
+    result.byMonth.forEach(m => {
+        byMonth.innerHTML += '<div class="list-item"><h4>' + escapeHtml(String(m.month)) + '</h4><p>৳' + m.amount.toLocaleString() + '</p></div>';
     });
-}
-
-async function loadFdFunds() {
-    const list = document.getElementById("fdFundsList");
-    list.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getFunds", { admin: adminSession });
-    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
-    list.innerHTML = "";
-    if (result.funds.length === 0) { list.innerHTML = '<p class="policy-empty">No funds yet.</p>'; return; }
-    result.funds.forEach(f => {
-        list.innerHTML += '<div class="list-item"><h4>' + f.name + ' (' + f.type + ')</h4>' +
-            '<p>' + (f.source || "") + (f.purpose ? " · " + f.purpose : "") + '</p>' +
-            '<p class="meta">Received: ৳' + f.received.toLocaleString() + ' · Spent: ৳' + f.spent.toLocaleString() + ' · Remaining: ৳' + f.remaining.toLocaleString() + '</p>' +
-            '<div class="row-actions"><button class="btn-delete" onclick="fdDeleteFund(\'' + f.id + '\')">Delete</button></div></div>';
-    });
-}
-
-async function fdAddFund() {
-    const fund = {
-        name: getValue("fundName"), type: document.getElementById("fundType").value,
-        source: getValue("fundSource"), purpose: getValue("fundPurpose")
-    };
-    if (!fund.name) return showMessage("fdMessage", "Fund name is required.", "error");
-    showLoading("ফান্ড যোগ করা হচ্ছে…");
-    const result = await callBackend("addFund", { admin: adminSession, fund: fund });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) {
-        document.getElementById("fundName").value = "";
-        document.getElementById("fundSource").value = "";
-        document.getElementById("fundPurpose").value = "";
-        loadFdFunds();
-    }
-}
-async function fdDeleteFund(id) {
-    if (!confirm("Delete this fund/account? Existing income/expense entries linked to it will remain but show as unlinked.")) return;
-    showLoading("ফান্ড মুছে ফেলা হচ্ছে…");
-    const result = await callBackend("deleteFund", { admin: adminSession, id: id });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadFdFunds();
 }
 
 function readReceiptAsBase64(inputId, callback) {
@@ -4026,96 +3779,6 @@ function readReceiptAsBase64(inputId, callback) {
         callback({ base64: evt.target.result.split(",")[1], mimeType: file.type || "image/jpeg" });
     };
     reader.readAsDataURL(file);
-}
-
-async function loadFdIncomes() {
-    const list = document.getElementById("fdIncomeList");
-    list.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getIncomes", { admin: adminSession });
-    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
-    list.innerHTML = "";
-    if (result.incomes.length === 0) { list.innerHTML = '<p class="policy-empty">No income recorded yet.</p>'; return; }
-    result.incomes.forEach(inc => {
-        list.innerHTML += '<div class="list-item"><h4>৳' + Number(inc.amount).toLocaleString() + ' — ' + inc.incomeType + '</h4>' +
-            '<p>' + (inc.source || "") + ' · ' + inc.paymentMethod + ' · ' + inc.date + '</p>' +
-            '<p class="meta">Ref: ' + (inc.reference || "-") + ' · By: ' + (inc.receivedBy || "-") + '</p>' +
-            (inc.receiptUrl ? '<p class="meta"><a href="' + inc.receiptUrl + '" target="_blank">View receipt</a></p>' : '') +
-            '<div class="row-actions"><button class="btn-delete" onclick="fdDeleteIncome(\'' + inc.id + '\')">Delete</button></div></div>';
-    });
-}
-
-async function fdAddIncome() {
-    const income = {
-        date: getValue("incDate"), source: getValue("incSource"),
-        incomeType: document.getElementById("incType").value, amount: getValue("incAmount"),
-        paymentMethod: document.getElementById("incMethod").value, reference: getValue("incReference"),
-        receivedBy: getValue("incReceivedBy"), fundId: document.getElementById("incFund").value
-    };
-    if (!income.amount || !income.fundId) return showMessage("fdMessage", "Amount and fund are required.", "error");
-
-    showLoading("আয় যোগ করা হচ্ছে…");
-    readReceiptAsBase64("incReceipt", async function(fileData) {
-        const result = await callBackend("addIncome", { admin: adminSession, income: income, fileData: fileData });
-        hideLoading();
-        showMessage("fdMessage", result.message, result.success ? "success" : "error");
-        if (result.success) {
-            ["incDate","incSource","incAmount","incReference","incReceivedBy"].forEach(id => document.getElementById(id).value = "");
-            document.getElementById("incReceipt").value = "";
-            loadFdIncomes();
-        }
-    });
-}
-async function fdDeleteIncome(id) {
-    showLoading("আয় যোগ করা হচ্ছে…");
-    const result = await callBackend("deleteIncome", { admin: adminSession, id: id });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadFdIncomes();
-}
-
-async function loadFdExpenses() {
-    const list = document.getElementById("fdExpenseList");
-    list.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getExpenses", { admin: adminSession });
-    if (!result.success) { showMessage("fdMessage", result.message, "error"); return; }
-    list.innerHTML = "";
-    if (result.expenses.length === 0) { list.innerHTML = '<p class="policy-empty">No expenses recorded yet.</p>'; return; }
-    result.expenses.forEach(exp => {
-        list.innerHTML += '<div class="list-item"><h4>৳' + Number(exp.amount).toLocaleString() + ' — ' + exp.category + '</h4>' +
-            '<p>' + (exp.description || "") + ' · ' + exp.paymentMethod + ' · ' + exp.date + '</p>' +
-            '<p class="meta">Voucher: ' + (exp.voucherNumber || "-") + ' · Approved: ' + (exp.approvedBy || "-") + ' · Paid by: ' + (exp.paidBy || "-") + '</p>' +
-            (exp.receiptUrl ? '<p class="meta"><a href="' + exp.receiptUrl + '" target="_blank">View receipt</a></p>' : '') +
-            '<div class="row-actions"><button class="btn-delete" onclick="fdDeleteExpense(\'' + exp.id + '\')">Delete</button></div></div>';
-    });
-}
-
-async function fdAddExpense() {
-    const expense = {
-        date: getValue("expDate"), category: getValue("expCategory"), description: getValue("expDescription"),
-        amount: getValue("expAmount"), paymentMethod: document.getElementById("expMethod").value,
-        voucherNumber: getValue("expVoucher"), approvedBy: getValue("expApprovedBy"), paidBy: getValue("expPaidBy"),
-        fundId: document.getElementById("expFund").value
-    };
-    if (!expense.amount || !expense.fundId) return showMessage("fdMessage", "Amount and fund are required.", "error");
-
-    showLoading("খরচ যোগ করা হচ্ছে…");
-    readReceiptAsBase64("expReceipt", async function(fileData) {
-        const result = await callBackend("addExpense", { admin: adminSession, expense: expense, fileData: fileData });
-        hideLoading();
-        showMessage("fdMessage", result.message, result.success ? "success" : "error");
-        if (result.success) {
-            ["expDate","expCategory","expDescription","expAmount","expVoucher","expApprovedBy","expPaidBy"].forEach(id => document.getElementById(id).value = "");
-            document.getElementById("expReceipt").value = "";
-            loadFdExpenses();
-        }
-    });
-}
-async function fdDeleteExpense(id) {
-    showLoading("খরচ যোগ করা হচ্ছে…");
-    const result = await callBackend("deleteExpense", { admin: adminSession, id: id });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadFdExpenses();
 }
 
 async function loadFdPayments() {
@@ -4146,277 +3809,14 @@ async function fdSetStatus(id, status) {
     if (result.success) { loadFdPayments(); updateFdPendingBadge(); }
 }
 
-/* =========================================================
-   FD: REGISTER — Asset / Stock / Advance
-========================================================= */
-function openRegisterSub(type) {
-    document.getElementById("registerMenu").classList.add("hidden");
-    ["Asset","Stock","Advance"].forEach(t => document.getElementById("register" + t).classList.add("hidden"));
-    document.getElementById("register" + capitalize(type)).classList.remove("hidden");
-    if (type === "asset") { assetSubAction("list"); }
-    if (type === "stock") { stockSubAction("list"); }
-    if (type === "advance") { advanceSubAction("list"); }
-}
-function closeRegisterSub() {
-    document.getElementById("registerMenu").classList.remove("hidden");
-    ["Asset","Stock","Advance"].forEach(t => document.getElementById("register" + t).classList.add("hidden"));
-}
-
 /* ----- Asset Register ----- */
 const ASSET_STATUS_OPTIONS = ["Active","Transferred","Under Maintenance","Damaged","Lost","Returned","Disposed"];
-
-function assetSubAction(action) {
-    document.getElementById("assetAddForm").classList.toggle("hidden", action !== "add");
-    document.getElementById("assetHistoryView").classList.toggle("hidden", action !== "history");
-    document.getElementById("assetListView").classList.toggle("hidden", action === "add" || action === "history");
-    if (action === "list") loadAssetList();
-    if (action === "history") loadAssetHistory();
-}
-async function loadAssetList() {
-    const view = document.getElementById("assetListView");
-    view.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getAssets", { admin: adminSession });
-    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
-    if (result.assets.length === 0) { view.innerHTML = '<p class="policy-empty">No assets added yet.</p>'; return; }
-    view.innerHTML = "";
-    result.assets.forEach(a => {
-        const statusButtons = ASSET_STATUS_OPTIONS.filter(s => s !== a.status).map(s =>
-            '<button class="btn-verify" onclick="changeAssetStatus(\'' + a.id + '\',\'' + s + '\')">' + s + '</button>'
-        ).join("");
-        view.innerHTML += '<div class="list-item"><h4>' + a.name + ' (' + (a.category || "-") + ')</h4>' +
-            '<p>Value: ৳' + Number(a.value || 0).toLocaleString() + ' · Location: ' + (a.location || "-") + '</p>' +
-            '<p class="meta">Status: ' + a.status + ' · Purchased: ' + (a.purchaseDate || "-") + '</p>' +
-            '<div class="row-actions" style="flex-wrap:wrap;">' + statusButtons +
-                '<button class="btn-delete" onclick="deleteAssetEntry(\'' + a.id + '\')">Delete</button>' +
-            '</div></div>';
-    });
-}
-async function changeAssetStatus(assetId, status) {
-    const details = prompt("Optional note for this status change (e.g. transferred to, repair details):", "");
-    if (details === null) return;
-    showLoading("স্ট্যাটাস আপডেট করা হচ্ছে…");
-    const result = await callBackend("updateAssetStatus", { admin: adminSession, assetId: assetId, status: status, details: details });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadAssetList();
-}
-async function loadAssetHistory() {
-    const view = document.getElementById("assetHistoryView");
-    view.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getAssetHistory", { admin: adminSession });
-    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
-    if (result.history.length === 0) { view.innerHTML = '<p class="policy-empty">No history yet.</p>'; return; }
-    view.innerHTML = "";
-    result.history.forEach(h => {
-        view.innerHTML += '<div class="list-item"><h4>' + h.assetName + ' — ' + h.action + '</h4>' +
-            (h.details ? '<p>' + h.details + '</p>' : '') +
-            '<p class="meta">By ' + h.by + ' · ' + formatDate(h.timestamp) + '</p></div>';
-    });
-}
-async function submitAsset() {
-    const asset = {
-        name: getValue("assetName"), category: getValue("assetCategory"),
-        purchaseDate: getValue("assetPurchaseDate"), value: getValue("assetValue"),
-        location: getValue("assetLocation"), status: document.getElementById("assetStatus").value
-    };
-    if (!asset.name) return showMessage("fdMessage", "Asset name is required.", "error");
-    showLoading("সম্পদ যোগ করা হচ্ছে…");
-    const result = await callBackend("addAsset", { admin: adminSession, asset: asset });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) {
-        ["assetName","assetCategory","assetPurchaseDate","assetValue","assetLocation"].forEach(id => document.getElementById(id).value = "");
-        assetSubAction("list");
-    }
-}
-async function deleteAssetEntry(id) {
-    showLoading("সম্পদ যোগ করা হচ্ছে…");
-    const result = await callBackend("deleteAsset", { admin: adminSession, id: id });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadAssetList();
-}
 
 /* ----- Stock Register ----- */
 const STOCK_TXN_ACTIONS = { in: "stockIn", out: "stockOut", damaged: "stockDamaged", lost: "stockLost", returned: "stockReturned" };
 const STOCK_TXN_LABELS = { in: "Record Stock In", out: "Record Stock Out", damaged: "Record Damaged", lost: "Record Lost", returned: "Record Returned" };
 
-function stockSubAction(action) {
-    const isTxn = STOCK_TXN_ACTIONS.hasOwnProperty(action);
-    document.getElementById("stockAddForm").classList.toggle("hidden", action !== "add");
-    document.getElementById("stockInOutForm").classList.toggle("hidden", !isTxn);
-    document.getElementById("stockHistoryView").classList.toggle("hidden", action !== "history");
-    document.getElementById("stockListView").classList.toggle("hidden", action === "add" || isTxn || action === "history");
-    if (isTxn) {
-        document.getElementById("stockTxnBtn").textContent = STOCK_TXN_LABELS[action];
-        document.getElementById("stockTxnBtn").dataset.type = action;
-        loadStockItemOptions();
-    }
-    if (action === "list") loadStockList();
-    if (action === "history") loadStockHistory();
-}
-async function loadStockItemOptions() {
-    const select = document.getElementById("stockTxnItem");
-    const result = await callBackend("getStockItems", { admin: adminSession });
-    if (!result.success) return;
-    select.innerHTML = "";
-    result.items.forEach(it => {
-        const opt = document.createElement("option");
-        opt.value = it.id;
-        opt.textContent = it.name + " (current: " + it.currentQty + " " + (it.unit || "") + ")";
-        select.appendChild(opt);
-    });
-}
-async function loadStockList() {
-    const view = document.getElementById("stockListView");
-    view.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getStockItems", { admin: adminSession });
-    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
-    if (result.items.length === 0) { view.innerHTML = '<p class="policy-empty">No stock items yet.</p>'; return; }
-    view.innerHTML = "";
-    result.items.forEach(it => {
-        const low = it.lowStockThreshold && Number(it.currentQty) <= Number(it.lowStockThreshold);
-        view.innerHTML += '<div class="list-item"><h4>' + it.name + (low ? ' ⚠️ Low Stock' : '') + '</h4>' +
-            '<p>' + (it.category || "-") + ' · Current: ' + it.currentQty + ' ' + (it.unit || "") + '</p>' +
-            '<div class="row-actions"><button class="btn-delete" onclick="deleteStockItemEntry(\'' + it.id + '\')">Delete</button></div></div>';
-    });
-}
-async function loadStockHistory() {
-    const view = document.getElementById("stockHistoryView");
-    view.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getStockHistory", { admin: adminSession });
-    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
-    if (result.history.length === 0) { view.innerHTML = '<p class="policy-empty">No stock history yet.</p>'; return; }
-    view.innerHTML = "";
-    result.history.forEach(h => {
-        view.innerHTML += '<div class="list-item"><h4>' + h.itemName + ' — ' + h.type + ' (' + h.quantity + ')</h4>' +
-            (h.note ? '<p>' + h.note + '</p>' : '') +
-            '<p class="meta">By ' + h.by + ' · ' + formatDate(h.timestamp) + '</p></div>';
-    });
-}
-async function submitStockItem() {
-    const item = {
-        name: getValue("stockItemName"), category: getValue("stockCategory"), unit: getValue("stockUnit"),
-        openingQty: getValue("stockOpeningQty"), lowStockThreshold: getValue("stockLowThreshold")
-    };
-    if (!item.name) return showMessage("fdMessage", "Item name is required.", "error");
-    showLoading("স্টক আইটেম যোগ করা হচ্ছে…");
-    const result = await callBackend("addStockItem", { admin: adminSession, item: item });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) {
-        ["stockItemName","stockCategory","stockUnit","stockOpeningQty","stockLowThreshold"].forEach(id => document.getElementById(id).value = "");
-        stockSubAction("list");
-    }
-}
-async function submitStockTxn() {
-    const type = document.getElementById("stockTxnBtn").dataset.type;
-    const itemId = document.getElementById("stockTxnItem").value;
-    const qty = getValue("stockTxnQty");
-    const note = getValue("stockTxnNote");
-    if (!itemId || !qty) return showMessage("fdMessage", "Select an item and enter quantity.", "error");
-    showLoading("স্টক লেনদেন সংরক্ষণ করা হচ্ছে…");
-    const result = await callBackend(STOCK_TXN_ACTIONS[type], { admin: adminSession, itemId: itemId, quantity: qty, note: note });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) {
-        document.getElementById("stockTxnQty").value = "";
-        document.getElementById("stockTxnNote").value = "";
-        stockSubAction("list");
-    }
-}
-async function deleteStockItemEntry(id) {
-    showLoading("স্টক লেনদেন সংরক্ষণ করা হচ্ছে…");
-    const result = await callBackend("deleteStockItem", { admin: adminSession, id: id });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadStockList();
-}
-
 /* ----- Advance Register ----- */
-function advanceSubAction(action) {
-    document.getElementById("advanceAddForm").classList.toggle("hidden", action !== "add");
-    document.getElementById("advanceHistoryView").classList.toggle("hidden", action !== "history");
-    document.getElementById("advanceListView").classList.toggle("hidden", action === "add" || action === "history");
-    if (action === "list") loadAdvanceList();
-    if (action === "history") loadAdvanceHistory();
-}
-async function loadAdvanceList() {
-    const view = document.getElementById("advanceListView");
-    view.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getAdvances", { admin: adminSession });
-    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
-    if (result.advances.length === 0) { view.innerHTML = '<p class="policy-empty">No advances recorded yet.</p>'; return; }
-    view.innerHTML = "";
-    result.advances.forEach(a => {
-        view.innerHTML += '<div class="list-item"><h4>' + a.personName + ' — Requested ৳' + Number(a.amount).toLocaleString() + '</h4>' +
-            '<p>' + (a.purpose || "-") + ' · ' + (a.date || "-") + '</p>' +
-            '<p class="meta">Status: ' + a.status + ' · Paid: ৳' + a.totalPaid.toLocaleString() + ' · Adjusted: ৳' + a.totalAdjusted.toLocaleString() + ' · Returned: ৳' + a.totalReturned.toLocaleString() + '</p>' +
-            '<p class="meta">Outstanding: ৳' + a.outstanding.toLocaleString() + '</p>' +
-            '<div class="row-actions" style="flex-wrap:wrap;">' +
-                '<button class="btn-verify" onclick="recordAdvanceTxn(\'' + a.id + '\',\'Payment\')">Payment</button>' +
-                '<button class="btn-verify" onclick="recordAdvanceTxn(\'' + a.id + '\',\'Adjustment\')">Adjustment</button>' +
-                '<button class="btn-verify" onclick="recordAdvanceTxn(\'' + a.id + '\',\'Return\')">Return</button>' +
-                (a.status === "Pending" ? '<button class="btn-verify" onclick="setAdvanceStatus(\'' + a.id + '\',\'Approved\')">Approve</button>' : '') +
-                '<button class="btn-delete" onclick="deleteAdvanceEntry(\'' + a.id + '\')">Delete</button>' +
-            '</div></div>';
-    });
-}
-async function recordAdvanceTxn(advanceId, type) {
-    const amountStr = prompt(type + " amount (৳):", "");
-    if (amountStr === null || !amountStr.trim()) return;
-    const amount = Number(amountStr);
-    if (!amount || amount <= 0) { alert("Enter a valid amount."); return; }
-    const note = prompt("Optional note:", "") || "";
-    showLoading("লেনদেন সংরক্ষণ করা হচ্ছে…");
-    const result = await callBackend("addAdvanceTransaction", { admin: adminSession, advanceId: advanceId, type: type, amount: amount, note: note });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadAdvanceList();
-}
-async function loadAdvanceHistory() {
-    const view = document.getElementById("advanceHistoryView");
-    view.innerHTML = '<p class="policy-empty">Loading…</p>';
-    const result = await callBackend("getAdvanceHistory", { admin: adminSession, advanceId: null });
-    if (!result.success) { view.innerHTML = '<p class="policy-empty">' + result.message + '</p>'; return; }
-    if (result.history.length === 0) { view.innerHTML = '<p class="policy-empty">No advance transactions yet.</p>'; return; }
-    view.innerHTML = "";
-    result.history.forEach(h => {
-        view.innerHTML += '<div class="list-item"><h4>' + h.type + ' — ৳' + Number(h.amount).toLocaleString() + '</h4>' +
-            (h.note ? '<p>' + h.note + '</p>' : '') +
-            '<p class="meta">By ' + h.by + ' · ' + formatDate(h.timestamp) + '</p></div>';
-    });
-}
-async function submitAdvance() {
-    const advance = {
-        personName: getValue("advancePersonName"), purpose: getValue("advancePurpose"),
-        amount: getValue("advanceAmount"), date: getValue("advanceDate")
-    };
-    if (!advance.personName || !advance.amount) return showMessage("fdMessage", "Name and amount are required.", "error");
-    showLoading("অগ্রিম যোগ করা হচ্ছে…");
-    const result = await callBackend("addAdvance", { admin: adminSession, advance: advance });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) {
-        ["advancePersonName","advancePurpose","advanceAmount","advanceDate"].forEach(id => document.getElementById(id).value = "");
-        advanceSubAction("list");
-    }
-}
-async function setAdvanceStatus(id, status) {
-    showLoading("অগ্রিম যোগ করা হচ্ছে…");
-    const result = await callBackend("updateAdvanceStatus", { admin: adminSession, id: id, status: status });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadAdvanceList();
-}
-async function deleteAdvanceEntry(id) {
-    showLoading("স্ট্যাটাস আপডেট করা হচ্ছে…");
-    const result = await callBackend("deleteAdvance", { admin: adminSession, id: id });
-    hideLoading();
-    showMessage("fdMessage", result.message, result.success ? "success" : "error");
-    if (result.success) loadAdvanceList();
-}
-
 /* ===== ADMIN: Report & Registration ===== */
 async function loadRrRegistrations() {
     const registrationList = document.getElementById("rrRegistrationList");
